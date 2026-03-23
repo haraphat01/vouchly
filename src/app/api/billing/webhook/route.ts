@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendUpgradeConfirmationEmail, sendCancellationEmail } from '@/lib/email'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', { apiVersion: '2024-06-20' })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', { apiVersion: '2024-04-10' })
 
 const PLAN_PRICES: Record<string, { plan: 'starter' | 'pro'; price: number }> = {
   [process.env.STRIPE_STARTER_PRICE_ID || 'price_starter']: { plan: 'starter', price: 19 },
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.CheckoutSession
+        const session = event.data.object as Stripe.Checkout.Session
         const priceId = (session as any).line_items?.data?.[0]?.price?.id
         const planInfo = priceId ? PLAN_PRICES[priceId] : null
         const plan = (session.metadata?.plan as 'starter' | 'pro') || planInfo?.plan
@@ -68,5 +68,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
   }
 }
-
-export const config = { api: { bodyParser: false } }
