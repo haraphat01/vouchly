@@ -1,0 +1,95 @@
+'use client'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import type { Space } from '@/lib/supabase'
+import { formatDate } from '@/lib/utils'
+import { Plus, ExternalLink, Copy, MoreHorizontal, Trash2, Edit } from 'lucide-react'
+
+export default function SpacesPage() {
+  const [spaces, setSpaces] = useState<Space[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { data } = await supabase.from('spaces').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
+      setSpaces(data || [])
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  async function deleteSpace(id: string) {
+    if (!confirm('Delete this space and all its testimonials? This cannot be undone.')) return
+    await supabase.from('spaces').delete().eq('id', id)
+    setSpaces(prev => prev.filter(s => s.id !== id))
+  }
+
+  function copyLink(slug: string) {
+    const url = `${window.location.origin}/collect/${slug}`
+    navigator.clipboard.writeText(url)
+    setCopied(slug)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  return (
+    <div style={{ padding: '2.5rem', maxWidth: 1000 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Spaces</h1>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem' }}>Each space is a branded collection page for one product or service.</p>
+        </div>
+        <Link href="/dashboard/spaces/new" className="btn btn-primary">
+          <Plus size={15} /> New Space
+        </Link>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[...Array(3)].map((_, i) => <div key={i} className="skeleton" style={{ height: 90 }} />)}
+        </div>
+      ) : spaces.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '4rem', border: '2px dashed #eceae6', background: 'var(--paper)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>No spaces yet</h3>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', maxWidth: 360, margin: '0 auto 1.5rem' }}>Create your first space to start collecting testimonials from your customers.</p>
+          <Link href="/dashboard/spaces/new" className="btn btn-primary">Create your first space</Link>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {spaces.map(space => (
+            <div key={space.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: (space.theme_color || '#d4751f') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>💬</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--ink)' }}>{space.name}</span>
+                  <span className={`badge ${space.is_active ? 'badge-green' : 'badge-gray'}`} style={{ fontSize: '0.68rem' }}>{space.is_active ? 'Active' : 'Inactive'}</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '0.2rem' }}>
+                  {window?.location?.origin}/collect/<strong>{space.slug}</strong> · Created {formatDate(space.created_at)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button onClick={() => copyLink(space.slug)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                  <Copy size={13} /> {copied === space.slug ? 'Copied!' : 'Copy link'}
+                </button>
+                <Link href={`/collect/${space.slug}`} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                  <ExternalLink size={13} /> Preview
+                </Link>
+                <Link href={`/dashboard/spaces/${space.id}`} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                  <Edit size={13} /> Manage
+                </Link>
+                <button onClick={() => deleteSpace(space.id)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,137 @@
+import type { Metadata } from 'next'
+import './globals.css'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vouchly.app'
+
+export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: 'vouchly — Collect & Display Customer Testimonials',
+    template: '%s | vouchly',
+  },
+  description:
+    'vouchly helps you collect text and video testimonials from customers, polish them with AI, and embed a beautiful testimonial wall on any website — in one script tag.',
+  keywords: [
+    'testimonial software',
+    'customer testimonials',
+    'social proof',
+    'testimonial wall',
+    'collect testimonials',
+    'video testimonials',
+    'AI testimonial tool',
+    'embed testimonials',
+    'review collection',
+    'customer reviews',
+  ],
+  authors: [{ name: 'vouchly', url: APP_URL }],
+  creator: 'vouchly',
+  publisher: 'vouchly',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: APP_URL,
+    siteName: 'vouchly',
+    title: 'vouchly — Collect & Display Customer Testimonials',
+    description:
+      'Collect text and video testimonials, let AI polish the rough edges, then embed a beautiful wall anywhere — in one script tag.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'vouchly — Collect & Display Customer Testimonials',
+    description:
+      'Collect text and video testimonials, polish with AI, embed anywhere. Free to start.',
+    creator: '@vouchly',
+  },
+  alternates: {
+    canonical: APP_URL,
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${APP_URL}/#organization`,
+      name: 'vouchly',
+      url: APP_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${APP_URL}/favicon.svg`,
+      },
+      sameAs: [],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${APP_URL}/#website`,
+      url: APP_URL,
+      name: 'vouchly',
+      publisher: { '@id': `${APP_URL}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${APP_URL}/?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'vouchly',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      url: APP_URL,
+      description:
+        'Collect text and video testimonials from customers, AI-polish them, and embed a live testimonial wall on any website.',
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Free',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        {
+          '@type': 'Offer',
+          name: 'Starter',
+          price: '19',
+          priceCurrency: 'USD',
+          billingDuration: 'P1M',
+        },
+        {
+          '@type': 'Offer',
+          name: 'Pro',
+          price: '39',
+          priceCurrency: 'USD',
+          billingDuration: 'P1M',
+        },
+      ],
+    },
+  ],
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body className="grain">{children}</body>
+    </html>
+  )
+}
