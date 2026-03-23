@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s | vouchly',
   },
   description:
-    'vouchly helps you collect text and video testimonials from customers, polish them with AI, and embed a beautiful testimonial wall on any website — in one script tag.',
+    'vouchly lets you collect text & video testimonials from customers, rewrite them with AI, and embed a live testimonial wall on any website — all in one script tag. Free to start.',
   keywords: [
     'testimonial software',
     'customer testimonials',
@@ -48,13 +48,13 @@ export const metadata: Metadata = {
     siteName: 'vouchly',
     title: 'vouchly — Collect & Display Customer Testimonials',
     description:
-      'Collect text and video testimonials, let AI polish the rough edges, then embed a beautiful wall anywhere — in one script tag.',
+      'vouchly lets you collect text & video testimonials, polish them with AI, and embed a live testimonial wall on any site — in one script tag. Free to start.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'vouchly — Collect & Display Customer Testimonials',
     description:
-      'Collect text and video testimonials, polish with AI, embed anywhere. Free to start.',
+      'Collect text & video testimonials from customers, rewrite them with AI, and embed a live testimonial wall on your site — one script tag. Free to start.',
     creator: '@vouchly',
   },
   alternates: {
