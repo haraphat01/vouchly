@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { Space, Testimonial } from '@/lib/supabase'
-import { formatDate, truncate } from '@/lib/utils'
+import { formatDate, truncate, PLANS } from '@/lib/utils'
+import type { Profile } from '@/lib/supabase'
 import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail } from 'lucide-react'
 
 export default function SpaceDetailPage() {
@@ -22,15 +23,19 @@ export default function SpaceDetailPage() {
   const [inviteSent, setInviteSent] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [{ data: sp }, { data: te }] = await Promise.all([
+      const { data: { session } } = await supabase.auth.getSession()
+      const [{ data: sp }, { data: te }, { data: prof }] = await Promise.all([
         supabase.from('spaces').select('*').eq('id', id).single(),
         supabase.from('testimonials').select('*').eq('space_id', id).order('created_at', { ascending: false }),
+        session ? supabase.from('profiles').select('*').eq('id', session.user.id).single() : Promise.resolve({ data: null }),
       ])
       setSpace(sp)
       setTestimonials(te || [])
+      setProfile(prof)
       setLoading(false)
     }
     load()
@@ -45,14 +50,19 @@ export default function SpaceDetailPage() {
     if (!t.content) return
     setPolishing(t.id)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/testimonials/polish', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ content: t.content, name: t.submitter_name, role: t.submitter_role }),
       })
-      const { polished } = await res.json()
-      await supabase.from('testimonials').update({ ai_enhanced_content: polished }).eq('id', t.id)
-      setTestimonials(prev => prev.map(x => x.id === t.id ? { ...x, ai_enhanced_content: polished } : x))
+      const data = await res.json()
+      if (!res.ok) { alert(data.error || 'Failed to polish'); setPolishing(null); return }
+      await supabase.from('testimonials').update({ ai_enhanced_content: data.polished }).eq('id', t.id)
+      setTestimonials(prev => prev.map(x => x.id === t.id ? { ...x, ai_enhanced_content: data.polished } : x))
     } catch (e) { console.error(e) }
     setPolishing(null)
   }
@@ -237,12 +247,19 @@ export default function SpaceDetailPage() {
                     Reset to pending
                   </button>
                 )}
-                {t.content && !t.ai_enhanced_content && (
-                  <button onClick={() => polishWithAI(t)} disabled={polishing === t.id} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
-                    {polishing === t.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
-                    {polishing === t.id ? 'Polishing…' : 'Polish with AI'}
-                  </button>
-                )}
+                {t.content && !t.ai_enhanced_content && (() => {
+                  const canAI = PLANS[(profile?.plan || 'free') as keyof typeof PLANS].ai
+                  return canAI ? (
+                    <button onClick={() => polishWithAI(t)} disabled={polishing === t.id} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
+                      {polishing === t.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
+                      {polishing === t.id ? 'Polishing…' : 'Polish with AI'}
+                    </button>
+                  ) : (
+                    <Link href="/dashboard/settings?tab=billing" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Sparkles size={12} /> Polish with AI <span style={{ fontSize: '0.68rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.1rem 0.4rem', borderRadius: 4, fontWeight: 700 }}>Starter+</span>
+                    </Link>
+                  )
+                })()}
               </div>
             </div>
           ))}

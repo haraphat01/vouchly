@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { Space, Testimonial } from '@/lib/supabase'
-import { formatDate } from '@/lib/utils'
+import { formatDate, PLANS } from '@/lib/utils'
 import { Star, Quote, ExternalLink } from 'lucide-react'
 
 export default function WallPage() {
@@ -13,15 +13,19 @@ export default function WallPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<number | null>(null)
+  const [removeBranding, setRemoveBranding] = useState(false)
 
   useEffect(() => {
     async function load() {
       const { data: sp } = await supabase.from('spaces').select('*').eq('slug', slug).single()
       if (!sp) { setLoading(false); return }
       setSpace(sp)
-      const { data: te } = await supabase.from('testimonials').select('*')
-        .eq('space_id', sp.id).eq('status', 'approved').order('created_at', { ascending: false })
+      const [{ data: te }, { data: prof }] = await Promise.all([
+        supabase.from('testimonials').select('*').eq('space_id', sp.id).eq('status', 'approved').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('plan').eq('id', sp.user_id).single(),
+      ])
       setTestimonials(te || [])
+      setRemoveBranding(PLANS[(prof?.plan || 'free') as keyof typeof PLANS].removeBranding)
       setLoading(false)
     }
     load()
@@ -132,9 +136,11 @@ export default function WallPage() {
         </div>
 
         {/* Branding */}
-        <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>
-          Powered by <Link href="/" style={{ color: 'var(--ink-muted)', fontWeight: 600, textDecoration: 'none' }}>vouchly</Link>
-        </div>
+        {!removeBranding && (
+          <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>
+            Powered by <Link href="/" style={{ color: 'var(--ink-muted)', fontWeight: 600, textDecoration: 'none' }}>vouchly</Link>
+          </div>
+        )}
       </div>
     </div>
   )

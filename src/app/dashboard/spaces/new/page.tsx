@@ -1,15 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { generateSlug } from '@/lib/utils'
-import { ArrowLeft, Loader2, Plus, X } from 'lucide-react'
+import type { Profile } from '@/lib/supabase'
+import { generateSlug, PLANS } from '@/lib/utils'
+import { ArrowLeft, Loader2, Plus, X, Lock } from 'lucide-react'
 
 export default function NewSpacePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [spaceCount, setSpaceCount] = useState(0)
+  const [planLoading, setPlanLoading] = useState(true)
   const [form, setForm] = useState({
     name: '',
     slug: '',
@@ -22,6 +26,21 @@ export default function NewSpacePage() {
     questions: ['What is your name?', 'What do you love most about our product?'],
   })
   const [newQuestion, setNewQuestion] = useState('')
+
+  useEffect(() => {
+    async function loadPlan() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/auth/login'); return }
+      const [{ data: prof }, { count }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', session.user.id).single(),
+        supabase.from('spaces').select('id', { count: 'exact', head: true }).eq('user_id', session.user.id),
+      ])
+      setProfile(prof)
+      setSpaceCount(count || 0)
+      setPlanLoading(false)
+    }
+    loadPlan()
+  }, [router])
 
   function handleNameChange(name: string) {
     setForm(f => ({ ...f, name, slug: generateSlug(name) }))
@@ -43,24 +62,69 @@ export default function NewSpacePage() {
     setError('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/auth/login'); return }
-    const { error } = await supabase.from('spaces').insert({
-      user_id: session.user.id,
-      name: form.name,
-      slug: form.slug,
-      description: form.description,
-      header_title: form.header_title,
-      header_message: form.header_message,
-      theme_color: form.theme_color,
-      collect_text: form.collect_text,
-      collect_video: form.collect_video,
-      questions: form.questions,
+    const res = await fetch('/api/spaces', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: form.name,
+        slug: form.slug,
+        description: form.description,
+        header_title: form.header_title,
+        header_message: form.header_message,
+        theme_color: form.theme_color,
+        collect_text: form.collect_text,
+        collect_video: form.collect_video,
+        questions: form.questions,
+      }),
     })
-    if (error) {
-      setError(error.message)
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'Failed to create space')
       setLoading(false)
     } else {
       router.push('/dashboard/spaces')
     }
+  }
+
+  if (planLoading) {
+    return (
+      <div style={{ padding: '3rem' }}>
+        <div className="skeleton" style={{ height: 200 }} />
+      </div>
+    )
+  }
+
+  const planConfig = PLANS[(profile?.plan || 'free') as keyof typeof PLANS]
+  const atSpaceLimit = planConfig.spaces !== -1 && spaceCount >= planConfig.spaces
+  const canVideo = planConfig.video
+
+  // Show upgrade wall if at space limit
+  if (atSpaceLimit) {
+    return (
+      <div style={{ padding: '2.5rem', maxWidth: 680 }}>
+        <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
+          <ArrowLeft size={15} /> Back to spaces
+        </Link>
+        <div className="card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+            <Lock size={24} color="var(--brand)" />
+          </div>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Space limit reached</h2>
+          <p style={{ color: 'var(--ink-muted)', marginBottom: '0.5rem', lineHeight: 1.6 }}>
+            Your <strong>{planConfig.name}</strong> plan includes <strong>{planConfig.spaces} space{planConfig.spaces !== 1 ? 's' : ''}</strong>. You've used all of them.
+          </p>
+          <p style={{ color: 'var(--ink-muted)', marginBottom: '2rem', lineHeight: 1.6, fontSize: '0.9rem' }}>
+            Upgrade to {profile?.plan === 'free' ? 'Starter (3 spaces) or Pro (unlimited)' : 'Pro for unlimited spaces'} to create more.
+          </p>
+          <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" style={{ justifyContent: 'center' }}>
+            Upgrade your plan
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -109,13 +173,28 @@ export default function NewSpacePage() {
           <div>
             <label className="label">Accept</label>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {[['collect_text', '💬 Text testimonials'], ['collect_video', '🎥 Video testimonials']].map(([key, label]) => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input type="checkbox" checked={(form as Record<string, unknown>)[key] as boolean}
-                    onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))} style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
-                  {label}
-                </label>
-              ))}
+              {/* Text testimonials — always available */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={form.collect_text}
+                  onChange={e => setForm(f => ({ ...f, collect_text: e.target.checked }))}
+                  style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
+                💬 Text testimonials
+              </label>
+
+              {/* Video testimonials — Pro only */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', cursor: canVideo ? 'pointer' : 'default', opacity: canVideo ? 1 : 0.5 }}>
+                <input type="checkbox"
+                  checked={canVideo ? form.collect_video : false}
+                  disabled={!canVideo}
+                  onChange={e => canVideo && setForm(f => ({ ...f, collect_video: e.target.checked }))}
+                  style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: canVideo ? 'pointer' : 'not-allowed' }} />
+                🎥 Video testimonials
+                {!canVideo && (
+                  <Link href="/dashboard/settings?tab=billing" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.75rem', color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>
+                    <Lock size={11} /> Pro
+                  </Link>
+                )}
+              </label>
             </div>
           </div>
         </div>

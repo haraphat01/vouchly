@@ -169,7 +169,7 @@
         <div style="text-align:center;margin-top:20px">
           <a href="${BASE_URL}/collect/${spaceSlug}" target="_blank" class="pp-cta">Leave a testimonial</a>
         </div>
-        <div class="pp-branding">Powered by <a href="${BASE_URL}" target="_blank">vouchly</a></div>
+        ${space.removeBranding ? '' : `<div class="pp-branding">Powered by <a href="${BASE_URL}" target="_blank">vouchly</a></div>`}
       `;
     } catch (e) {
       container.innerHTML = '';

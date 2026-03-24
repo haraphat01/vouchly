@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { PLANS } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -19,8 +20,30 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify auth
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Check space limit against plan
+    const { data: profile } = await supabaseAdmin.from('profiles').select('plan').eq('id', user.id).single()
+    const plan = (profile?.plan || 'free') as keyof typeof PLANS
+    const planConfig = PLANS[plan]
+
+    if (planConfig.spaces !== -1) {
+      const { count } = await supabaseAdmin.from('spaces').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+      if ((count || 0) >= planConfig.spaces) {
+        return NextResponse.json(
+          { error: `Your ${planConfig.name} plan allows ${planConfig.spaces} space${planConfig.spaces !== 1 ? 's' : ''}. Upgrade to create more.` },
+          { status: 403 },
+        )
+      }
+    }
+
     const body = await req.json()
-    const { data, error } = await supabaseAdmin.from('spaces').insert(body).select().single()
+    const { data, error } = await supabaseAdmin.from('spaces').insert({ ...body, user_id: user.id }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ space: data })
   } catch (e) {

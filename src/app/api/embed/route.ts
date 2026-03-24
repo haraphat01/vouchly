@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { PLANS } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -29,8 +30,12 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(limit)
 
+  const { data: ownerProfile } = await supabaseAdmin.from('profiles').select('plan').eq('id', space.user_id).single()
+  const plan = (ownerProfile?.plan || 'free') as keyof typeof PLANS
+  const removeBranding = PLANS[plan].removeBranding
+
   return NextResponse.json({
     testimonials: testimonials || [],
-    space: { name: space.name, theme_color: space.theme_color, slug: space.slug },
+    space: { name: space.name, theme_color: space.theme_color, slug: space.slug, removeBranding },
   })
 }

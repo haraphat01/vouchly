@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendNewTestimonialNotification, sendTestimonialApprovedEmail } from '@/lib/email'
+import { PLANS } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -20,14 +21,37 @@ export async function POST(req: NextRequest) {
     const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, rating } = body
     if (!space_id || !submitter_name) return NextResponse.json({ error: 'space_id and submitter_name are required' }, { status: 400 })
 
+    // Look up the space and its owner's plan to enforce limits
+    const { data: space } = await supabaseAdmin.from('spaces').select('name, user_id, collect_video').eq('id', space_id).single()
+
+    if (space) {
+      const { data: ownerProfile } = await supabaseAdmin.from('profiles').select('plan').eq('id', space.user_id).single()
+      const plan = (ownerProfile?.plan || 'free') as keyof typeof PLANS
+      const planConfig = PLANS[plan]
+
+      // Block video submissions if the owner's plan doesn't include video
+      if (type === 'video' && !planConfig.video) {
+        return NextResponse.json({ error: 'Video testimonials are not available on this plan.' }, { status: 403 })
+      }
+
+      // Enforce testimonial limit for free plan
+      if (planConfig.testimonials !== -1) {
+        const { data: allSpaces } = await supabaseAdmin.from('spaces').select('id').eq('user_id', space.user_id)
+        const spaceIds = (allSpaces || []).map(s => s.id)
+        const { count } = await supabaseAdmin.from('testimonials').select('id', { count: 'exact', head: true }).in('space_id', spaceIds)
+        if ((count || 0) >= planConfig.testimonials) {
+          return NextResponse.json({ error: `Testimonial limit of ${planConfig.testimonials} reached for this account.` }, { status: 403 })
+        }
+      }
+    }
+
     const { data: testimonial, error } = await supabaseAdmin.from('testimonials').insert({
       space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, rating, status: 'pending',
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Notify space owner via Resend
+    // Notify space owner
     try {
-      const { data: space } = await supabaseAdmin.from('spaces').select('name, user_id').eq('id', space_id).single()
       if (space) {
         const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(space.user_id)
         if (user?.email) {
@@ -56,7 +80,6 @@ export async function PATCH(req: NextRequest) {
     const { data: testimonial, error } = await supabaseAdmin.from('testimonials').update(updates).eq('id', id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // If just approved AND submitter has email, notify them
     if (updates.status === 'approved' && testimonial?.submitter_email) {
       try {
         const { data: space } = await supabaseAdmin.from('spaces').select('name, slug').eq('id', testimonial.space_id).single()

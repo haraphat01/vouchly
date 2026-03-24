@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
+import { PLANS } from '@/lib/utils'
 import { Star, Send, Video, FileText, Loader2, CheckCircle2, Quote } from 'lucide-react'
 
 export default function CollectPage() {
@@ -17,13 +18,21 @@ export default function CollectPage() {
   const [form, setForm] = useState({ name: '', email: '', role: '', company: '', content: '' })
   const [recording, setRecording] = useState(false)
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null)
+  const [removeBranding, setRemoveBranding] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
 
   useEffect(() => {
-    supabase.from('spaces').select('*').eq('slug', slug).single()
-      .then(({ data }) => { setSpace(data); setLoading(false) })
+    async function load() {
+      const { data: sp } = await supabase.from('spaces').select('*').eq('slug', slug).single()
+      if (!sp) { setLoading(false); return }
+      setSpace(sp)
+      const { data: prof } = await supabase.from('profiles').select('plan').eq('id', sp.user_id).single()
+      setRemoveBranding(PLANS[(prof?.plan || 'free') as keyof typeof PLANS].removeBranding)
+      setLoading(false)
+    }
+    load()
   }, [slug])
 
   async function startRecording() {
@@ -61,20 +70,28 @@ export default function CollectPage() {
         videoUrl = urlData.publicUrl
       }
     }
-    await supabase.from('testimonials').insert({
-      space_id: space.id,
-      type: mode,
-      submitter_name: form.name,
-      submitter_email: form.email,
-      submitter_role: form.role,
-      submitter_company: form.company,
-      content: mode === 'text' ? form.content : null,
-      video_url: videoUrl,
-      rating: rating || null,
-      status: 'pending',
+    const res = await fetch('/api/testimonials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        space_id: space.id,
+        type: mode,
+        submitter_name: form.name,
+        submitter_email: form.email,
+        submitter_role: form.role,
+        submitter_company: form.company,
+        content: mode === 'text' ? form.content : null,
+        video_url: videoUrl,
+        rating: rating || null,
+      }),
     })
     setSubmitting(false)
-    setStep('done')
+    if (res.ok) {
+      setStep('done')
+    } else {
+      const { error } = await res.json()
+      alert(error || 'Failed to submit testimonial. Please try again.')
+    }
   }
 
   if (loading) {
@@ -226,9 +243,11 @@ export default function CollectPage() {
         )}
 
         {/* Branding */}
-        <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>
-          Powered by <strong style={{ color: 'var(--ink-muted)' }}>vouchly</strong>
-        </div>
+        {!removeBranding && (
+          <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>
+            Powered by <strong style={{ color: 'var(--ink-muted)' }}>vouchly</strong>
+          </div>
+        )}
       </div>
     </div>
   )
