@@ -1,11 +1,51 @@
 import Link from 'next/link'
-import { Star, Zap, Code2, ArrowRight, CheckCircle2, Quote } from 'lucide-react'
+import { Star, Zap, ArrowRight, CheckCircle2, Quote } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
-export default function Home() {
+export default async function Home() {
+  const t = await getTranslations('home')
+  const tn = await getTranslations('nav')
+
   const testimonials = [
-    { name: 'Amara Osei', role: 'Founder, BuildFast', text: 'vouchly transformed how we collect social proof. The AI rewriter is magic — raw feedback becomes polished gold.', rating: 5 },
-    { name: 'Lucas Ferreira', role: 'Marketing Lead, Pixelworks', text: 'Set it up in 20 minutes, had our first testimonial wall live before lunch. Incredible product.', rating: 5 },
-    { name: 'Priya Sharma', role: 'Solo developer', text: 'I\'ve tried 4 testimonial tools. This is the only one where I didn\'t need to read a 40-page docs just to embed something.', rating: 5 },
+    { name: t('t1_name'), role: t('t1_role'), text: t('t1_text'), rating: 5 },
+    { name: t('t2_name'), role: t('t2_role'), text: t('t2_text'), rating: 5 },
+    { name: t('t3_name'), role: t('t3_role'), text: t('t3_text'), rating: 5 },
+  ]
+
+  const features = [
+    { icon: '🎥', title: t('feat1_title'), desc: t('feat1_desc') },
+    { icon: '🤖', title: t('feat2_title'), desc: t('feat2_desc') },
+    { icon: '🎨', title: t('feat3_title'), desc: t('feat3_desc') },
+    { icon: '⭐', title: t('feat4_title'), desc: t('feat4_desc') },
+    { icon: '📧', title: t('feat5_title'), desc: t('feat5_desc') },
+    { icon: '🔗', title: t('feat6_title'), desc: t('feat6_desc') },
+    { icon: '💻', title: t('feat7_title'), desc: t('feat7_desc') },
+    { icon: '📊', title: t('feat8_title'), desc: t('feat8_desc') },
+  ]
+
+  const steps = [
+    { step: '01', icon: '📬', title: t('step1_title'), desc: t('step1_desc') },
+    { step: '02', icon: '✨', title: t('step2_title'), desc: t('step2_desc') },
+    { step: '03', icon: '🚀', title: t('step3_title'), desc: t('step3_desc') },
+  ]
+
+  const plans = [
+    {
+      name: t('plan_free_name'), price: '$0', period: t('per_month'),
+      features: [t('plan_free_f1'), t('plan_free_f2'), t('plan_free_f3'), t('plan_free_f4'), t('plan_free_f5')],
+      cta: t('plan_free_cta'), href: '/auth/signup', featured: false,
+    },
+    {
+      name: t('plan_starter_name'), price: '$19', period: t('per_month'),
+      features: [t('plan_starter_f1'), t('plan_starter_f2'), t('plan_starter_f3'), t('plan_starter_f4'), t('plan_starter_f5'), t('plan_starter_f6'), t('plan_starter_f7')],
+      cta: t('plan_starter_cta'), href: '/auth/signup?plan=starter', featured: false,
+    },
+    {
+      name: t('plan_pro_name'), price: '$39', period: t('per_month'),
+      features: [t('plan_pro_f1'), t('plan_pro_f2'), t('plan_pro_f3'), t('plan_pro_f4'), t('plan_pro_f5'), t('plan_pro_f6'), t('plan_pro_f7')],
+      cta: t('plan_pro_cta'), href: '/auth/signup?plan=pro', featured: true,
+    },
   ]
 
   return (
@@ -20,9 +60,10 @@ export default function Home() {
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', color: 'var(--ink)' }}>vouchly</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="#pricing" style={{ color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>Pricing</Link>
-            <Link href="/auth/login" className="btn btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>Log in</Link>
-            <Link href="/auth/signup" className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>Get started free</Link>
+            <LanguageSwitcher />
+            <Link href="#pricing" style={{ color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>{tn('pricing')}</Link>
+            <Link href="/auth/login" className="btn btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>{tn('login')}</Link>
+            <Link href="/auth/signup" className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>{tn('get_started')}</Link>
           </div>
         </div>
       </nav>
@@ -30,28 +71,33 @@ export default function Home() {
       {/* Hero */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '5rem 1.5rem 4rem', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brand-light)', color: '#7a3815', padding: '0.35rem 0.9rem', borderRadius: 100, fontSize: '0.8rem', fontWeight: 600, marginBottom: '1.5rem' }}>
-          <Zap size={13} /> AI-powered testimonial collector
+          <Zap size={13} /> {t('hero_badge')}
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 700, lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.03em', color: 'var(--ink)' }}>
-          Turn customer love into<br />
-          <span style={{ color: 'var(--brand)' }}>revenue-driving proof</span>
+          {t('hero_headline1')}<br />
+          <span style={{ color: 'var(--brand)' }}>{t('hero_headline2')}</span>
         </h1>
         <p style={{ fontSize: '1.15rem', color: 'var(--ink-muted)', maxWidth: 540, margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
-          Collect text and video testimonials, let AI polish the rough edges, then embed a beautiful wall anywhere — in one script tag.
+          {t('hero_sub')}
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/auth/signup" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>
-            Start free — no card needed <ArrowRight size={16} />
+            {t('cta_primary')} <ArrowRight size={16} />
           </Link>
-          <Link href="#how-it-works" className="btn btn-secondary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>See how it works</Link>
+          <Link href="#how-it-works" className="btn btn-secondary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>{t('cta_secondary')}</Link>
         </div>
-        <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--ink-subtle)' }}>Free plan includes 5 testimonials. No credit card required.</p>
+        <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--ink-subtle)' }}>{t('footnote')}</p>
       </section>
 
       {/* Social proof bar */}
       <div style={{ background: 'white', borderTop: '1px solid #eceae6', borderBottom: '1px solid #eceae6', padding: '1.2rem 0' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3rem', padding: '0 1.5rem', flexWrap: 'wrap' }}>
-          {[['1,200+', 'Businesses using vouchly'], ['48,000+', 'Testimonials collected'], ['4.9★', 'Average rating from users'], ['< 5 min', 'Time to first testimonial']].map(([stat, label]) => (
+          {[
+            [t('stat1_value'), t('stat1_label')],
+            [t('stat2_value'), t('stat2_label')],
+            [t('stat3_value'), t('stat3_label')],
+            [t('stat4_value'), t('stat4_label')],
+          ].map(([stat, label]) => (
             <div key={stat} style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 700, color: 'var(--brand)' }}>{stat}</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>{label}</div>
@@ -62,13 +108,9 @@ export default function Home() {
 
       {/* How it works */}
       <section id="how-it-works" style={{ maxWidth: 1100, margin: '0 auto', padding: '5rem 1.5rem' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>Three steps to social proof</h2>
+        <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>{t('steps_title')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-          {[
-            { step: '01', icon: '📬', title: 'Collect', desc: 'Send your customers a beautiful branded form. Collect text or video testimonials in seconds.' },
-            { step: '02', icon: '✨', title: 'AI Polish', desc: 'Our AI rewrites raw feedback into compelling, professional testimonials. You review and approve.' },
-            { step: '03', icon: '🚀', title: 'Embed', desc: 'Add one script tag to your website. Your testimonial wall appears, automatically updated.' },
-          ].map(({ step, icon, title, desc }) => (
+          {steps.map(({ step, icon, title, desc }) => (
             <div key={step} className="card" style={{ position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: '1rem', right: '1.5rem', fontFamily: 'var(--font-display)', fontSize: '3.5rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1 }}>{step}</div>
               <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{icon}</div>
@@ -82,18 +124,9 @@ export default function Home() {
       {/* Features */}
       <section style={{ background: 'white', borderTop: '1px solid #eceae6', borderBottom: '1px solid #eceae6', padding: '5rem 0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>Everything you need to build trust</h2>
+          <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>{t('features_title')}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-            {[
-              { icon: '🎥', title: 'Video testimonials', desc: 'Let customers record directly in the browser. No app needed.' },
-              { icon: '🤖', title: 'AI rewriter', desc: 'Transforms "product is great lol" into a compelling testimonial.' },
-              { icon: '🎨', title: 'Branded forms', desc: 'Customise colors, logo, and questions to match your brand.' },
-              { icon: '⭐', title: 'Star ratings', desc: 'Collect 1–5 star ratings alongside testimonials.' },
-              { icon: '📧', title: 'Email invites', desc: 'Send personalised collection links directly to customers.' },
-              { icon: '🔗', title: 'Import reviews', desc: 'Pull in existing Google and Trustpilot reviews.' },
-              { icon: '💻', title: 'One-line embed', desc: 'One script tag. Works on any website or platform.' },
-              { icon: '📊', title: 'Analytics', desc: 'Track views, clicks, and conversion impact of your wall.' },
-            ].map(({ icon, title, desc }) => (
+            {features.map(({ icon, title, desc }) => (
               <div key={title} style={{ display: 'flex', gap: '1rem', padding: '1.25rem', border: '1px solid #eceae6', borderRadius: 'var(--radius-lg)' }}>
                 <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{icon}</span>
                 <div>
@@ -108,21 +141,21 @@ export default function Home() {
 
       {/* Sample testimonials */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '5rem 1.5rem' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>What our customers say</h2>
+        <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '3rem' }}>{t('social_title')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-          {testimonials.map((t) => (
-            <div key={t.name} className="testimonial-card card-hover">
+          {testimonials.map((t_) => (
+            <div key={t_.name} className="testimonial-card card-hover">
               <div style={{ display: 'flex', gap: 2, marginBottom: '1rem', marginTop: '1rem' }}>
-                {[...Array(t.rating)].map((_, i) => <Star key={i} size={14} fill="#e8963a" color="#e8963a" />)}
+                {[...Array(t_.rating)].map((_, i) => <Star key={i} size={14} fill="#e8963a" color="#e8963a" />)}
               </div>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{t.text}</p>
+              <p style={{ fontSize: '0.95rem', color: 'var(--ink)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{t_.text}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--brand)' }}>
-                  {t.name.split(' ').map(n => n[0]).join('')}
+                  {t_.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{t.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>{t.role}</div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{t_.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>{t_.role}</div>
                 </div>
               </div>
             </div>
@@ -133,16 +166,12 @@ export default function Home() {
       {/* Pricing */}
       <section id="pricing" style={{ background: 'white', borderTop: '1px solid #eceae6', padding: '5rem 0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '0.75rem' }}>Simple, honest pricing</h2>
-          <p style={{ textAlign: 'center', color: 'var(--ink-muted)', marginBottom: '3rem' }}>Start free. Scale when you're ready.</p>
+          <h2 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '0.75rem' }}>{t('pricing_title')}</h2>
+          <p style={{ textAlign: 'center', color: 'var(--ink-muted)', marginBottom: '3rem' }}>{t('pricing_sub')}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: 900, margin: '0 auto' }}>
-            {[
-              { name: 'Free', price: '$0', period: '/month', features: ['5 testimonials', '1 space', 'Text only', 'Embed widget (with branding)', 'Public wall'], cta: 'Start free', href: '/auth/signup', featured: false },
-              { name: 'Starter', price: '$19', period: '/month', features: ['Unlimited testimonials', '3 spaces', 'AI rewriter', 'No branding on widget', 'Email invitations', 'Import Google reviews'], cta: 'Get Starter', href: '/auth/signup?plan=starter', featured: false },
-              { name: 'Pro', price: '$39', period: '/month', features: ['Everything in Starter', 'Video testimonials', 'Unlimited spaces', 'Custom domain', 'Priority support', 'Analytics dashboard'], cta: 'Get Pro', href: '/auth/signup?plan=pro', featured: true },
-            ].map((plan) => (
+            {plans.map((plan) => (
               <div key={plan.name} style={{ border: plan.featured ? '2px solid var(--brand)' : '1px solid #eceae6', borderRadius: 'var(--radius-xl)', padding: '2rem', position: 'relative', background: plan.featured ? 'var(--paper)' : 'white' }}>
-                {plan.featured && <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'var(--brand)', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.9rem', borderRadius: 100 }}>Most popular</div>}
+                {plan.featured && <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'var(--brand)', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.9rem', borderRadius: 100 }}>{t('most_popular')}</div>}
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>{plan.name}</h3>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: '1.5rem' }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 700, color: 'var(--ink)' }}>{plan.price}</span>
@@ -162,12 +191,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Final CTA */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Ready to collect your first testimonial?</h2>
-        <p style={{ color: 'var(--ink-muted)', marginBottom: '2rem', fontSize: '1.1rem' }}>Join 1,200+ businesses building trust with vouchly.</p>
+        <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{t('final_title')}</h2>
+        <p style={{ color: 'var(--ink-muted)', marginBottom: '2rem', fontSize: '1.1rem' }}>{t('final_sub')}</p>
         <Link href="/auth/signup" className="btn btn-primary" style={{ fontSize: '1.05rem', padding: '0.85rem 2.5rem' }}>
-          Get started for free <ArrowRight size={16} />
+          {t('final_cta')} <ArrowRight size={16} />
         </Link>
       </section>
 
@@ -179,7 +208,7 @@ export default function Home() {
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)' }}>vouchly</span>
         </div>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ink-subtle)' }}>© {new Date().getFullYear()} vouchly. Built to help you grow.</p>
+        <p style={{ fontSize: '0.8rem', color: 'var(--ink-subtle)' }}>© {new Date().getFullYear()} vouchly. {t('footer_copy')}</p>
       </footer>
     </div>
   )

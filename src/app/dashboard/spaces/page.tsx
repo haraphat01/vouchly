@@ -5,19 +5,43 @@ import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import { Plus, ExternalLink, Copy, MoreHorizontal, Trash2, Edit } from 'lucide-react'
+import { calculateProofScore, type ScoredTestimonial } from '@/lib/proofScore'
 
 export default function SpacesPage() {
   const [spaces, setSpaces] = useState<Space[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState<string | null>(null)
+  const [spaceScores, setSpaceScores] = useState<Record<string, ReturnType<typeof calculateProofScore>>>({})
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       const { data } = await supabase.from('spaces').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
-      setSpaces(data || [])
+      const fetched = data || []
+      setSpaces(fetched)
       setLoading(false)
+
+      // Batch-fetch testimonials for all spaces to compute proof scores
+      if (fetched.length > 0) {
+        const ids = fetched.map((s: Space) => s.id)
+        const { data: te } = await supabase
+          .from('testimonials')
+          .select('space_id, status, rating, type, submitter_role, submitter_company, content, created_at')
+          .in('space_id', ids)
+        if (te) {
+          const bySpace: Record<string, ScoredTestimonial[]> = {}
+          for (const t of te) {
+            bySpace[t.space_id] = bySpace[t.space_id] ?? []
+            bySpace[t.space_id].push(t as ScoredTestimonial)
+          }
+          const scores: Record<string, ReturnType<typeof calculateProofScore>> = {}
+          for (const id of ids) {
+            scores[id] = calculateProofScore(bySpace[id] ?? [])
+          }
+          setSpaceScores(scores)
+        }
+      }
     }
     load()
   }, [])
@@ -67,6 +91,14 @@ export default function SpacesPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--ink)' }}>{space.name}</span>
                   <span className={`badge ${space.is_active ? 'badge-green' : 'badge-gray'}`} style={{ fontSize: '0.68rem' }}>{space.is_active ? 'Active' : 'Inactive'}</span>
+                  {spaceScores[space.id] && (() => {
+                    const ps = spaceScores[space.id]
+                    return (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: ps.color, background: ps.color + '18', padding: '0.15rem 0.55rem', borderRadius: 100 }}>
+                        {ps.gradeEmoji} {ps.total}
+                      </span>
+                    )
+                  })()}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '0.2rem' }}>
                   {window?.location?.origin}/collect/<strong>{space.slug}</strong> · Created {formatDate(space.created_at)}

@@ -42,6 +42,7 @@ export const PLANS = {
     testimonials: 5,
     spaces: 1,
     ai: false,
+    coach: false,
     video: false,
     customDomain: false,
     removeBranding: false,
@@ -52,6 +53,7 @@ export const PLANS = {
     testimonials: -1, // unlimited
     spaces: 3,
     ai: true,
+    coach: true,
     video: false,
     customDomain: false,
     removeBranding: true,
@@ -62,6 +64,7 @@ export const PLANS = {
     testimonials: -1,
     spaces: -1,
     ai: true,
+    coach: true,
     video: true,
     customDomain: true,
     removeBranding: true,

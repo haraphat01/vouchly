@@ -6,7 +6,9 @@ import { supabase } from '@/lib/supabase'
 import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
-import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail } from 'lucide-react'
+import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp } from 'lucide-react'
+import { calculateProofScore } from '@/lib/proofScore'
+import ProofScoreRing from '@/components/ProofScoreRing'
 
 export default function SpaceDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -132,6 +134,66 @@ export default function SpaceDetailPage() {
           </div>
         ))}
       </div>
+
+      {/* Proof Score™ */}
+      {(() => {
+        const ps = calculateProofScore(testimonials)
+        return (
+          <div className="card" style={{ marginBottom: '1.5rem', background: 'white' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem' }}>
+              <TrendingUp size={16} color="var(--brand)" />
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>Proof Score™</span>
+              <span style={{ fontSize: '0.72rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.15rem 0.5rem', borderRadius: 100, fontWeight: 700, letterSpacing: '0.03em' }}>BETA</span>
+              <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.9rem', color: ps.color }}>{ps.gradeEmoji} {ps.grade}</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              {/* Ring */}
+              <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                <ProofScoreRing score={ps.total} color={ps.color} size={96} />
+                <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: '0.35rem' }}>out of 100</div>
+              </div>
+
+              {/* Dimension bars */}
+              <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                {ps.dimensions.map(dim => (
+                  <div key={dim.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.8rem', width: 68, color: 'var(--ink-muted)', flexShrink: 0 }}>{dim.icon} {dim.label}</span>
+                    <div style={{ flex: 1, height: 6, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        borderRadius: 3,
+                        background: ps.color,
+                        width: `${(dim.score / dim.max) * 100}%`,
+                        transition: 'width 0.6s ease',
+                      }} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', width: 36, textAlign: 'right', flexShrink: 0 }}>{dim.score}/{dim.max}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tips */}
+            {ps.tips.length > 0 && (
+              <div style={{ marginTop: '1.25rem', borderTop: '1px solid #f0ece6', paddingTop: '1rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  💡 Tips to improve
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {ps.tips.map((tip, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.85rem', color: 'var(--ink)', background: 'var(--paper)', padding: '0.5rem 0.75rem', borderRadius: 8 }}>
+                      <span style={{ flexShrink: 0 }}>{tip.icon}</span>
+                      <span>{tip.text}</span>
+                      <span style={{ marginLeft: 'auto', flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: ps.color, background: ps.color + '18', padding: '0.15rem 0.5rem', borderRadius: 100 }}>+{tip.impact} pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Invite panel */}
       {showInvite && (

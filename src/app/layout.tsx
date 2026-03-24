@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, getLocale } from 'next-intl/server'
 import './globals.css'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vouchly.app'
@@ -70,10 +72,7 @@ const jsonLd = {
       '@id': `${APP_URL}/#organization`,
       name: 'vouchly',
       url: APP_URL,
-      logo: {
-        '@type': 'ImageObject',
-        url: `${APP_URL}/favicon.svg`,
-      },
+      logo: { '@type': 'ImageObject', url: `${APP_URL}/favicon.svg` },
       sameAs: [],
     },
     {
@@ -82,11 +81,6 @@ const jsonLd = {
       url: APP_URL,
       name: 'vouchly',
       publisher: { '@id': `${APP_URL}/#organization` },
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: `${APP_URL}/?q={search_term_string}` },
-        'query-input': 'required name=search_term_string',
-      },
     },
     {
       '@type': 'SoftwareApplication',
@@ -97,41 +91,31 @@ const jsonLd = {
       description:
         'Collect text and video testimonials from customers, AI-polish them, and embed a live testimonial wall on any website.',
       offers: [
-        {
-          '@type': 'Offer',
-          name: 'Free',
-          price: '0',
-          priceCurrency: 'USD',
-        },
-        {
-          '@type': 'Offer',
-          name: 'Starter',
-          price: '19',
-          priceCurrency: 'USD',
-          billingDuration: 'P1M',
-        },
-        {
-          '@type': 'Offer',
-          name: 'Pro',
-          price: '39',
-          priceCurrency: 'USD',
-          billingDuration: 'P1M',
-        },
+        { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
+        { '@type': 'Offer', name: 'Starter', price: '19', priceCurrency: 'USD', billingDuration: 'P1M' },
+        { '@type': 'Offer', name: 'Pro', price: '39', priceCurrency: 'USD', billingDuration: 'P1M' },
       ],
     },
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="grain">{children}</body>
+      <body className="grain">
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   )
 }

@@ -98,6 +98,7 @@ export default function SettingsPage() {
                 ['Testimonials', PLANS[profile?.plan || 'free'].testimonials === -1 ? 'Unlimited' : `${PLANS[profile?.plan || 'free'].testimonials} max`],
                 ['Spaces', PLANS[profile?.plan || 'free'].spaces === -1 ? 'Unlimited' : `${PLANS[profile?.plan || 'free'].spaces} max`],
                 ['AI rewriter', PLANS[profile?.plan || 'free'].ai ? '✓ Included' : '✗ Not included'],
+                ['AI Testimonial Coach', PLANS[profile?.plan || 'free'].coach ? '✓ Included' : '✗ Not included'],
                 ['Video testimonials', PLANS[profile?.plan || 'free'].video ? '✓ Included' : '✗ Not included'],
                 ['Remove branding', PLANS[profile?.plan || 'free'].removeBranding ? '✓ Included' : '✗ Not included'],
               ].map(([k, v]) => (
@@ -134,6 +135,7 @@ export default function SettingsPage() {
                           plan.testimonials === -1 ? 'Unlimited testimonials' : `${plan.testimonials} testimonials`,
                           plan.spaces === -1 ? 'Unlimited spaces' : `${plan.spaces} spaces`,
                           plan.ai && 'AI rewriter',
+                          plan.coach && 'AI Testimonial Coach',
                           plan.video && 'Video testimonials',
                           plan.removeBranding && 'Remove branding',
                           plan.customDomain && 'Custom domain',

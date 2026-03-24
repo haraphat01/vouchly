@@ -1,3 +1,6 @@
+const createNextIntlPlugin = require('next-intl/plugin')
+const withNextIntl = createNextIntlPlugin('./src/i18n.ts')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -17,11 +20,11 @@ const nextConfig = {
         source: '/embed/:path*',
         headers: [
           { key: 'X-Frame-Options', value: 'ALLOWALL' },
-          { key: 'Content-Security-Policy', value: "frame-ancestors *" },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
         ],
       },
     ]
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)
