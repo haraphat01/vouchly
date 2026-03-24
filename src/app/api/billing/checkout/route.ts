@@ -19,17 +19,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
-    // Get current user from auth header or cookie
+    // Resolve the logged-in user from the Bearer token
     const authHeader = req.headers.get('Authorization')
-    // In a real app, extract user from session
-    // For now we'll use a placeholder customer
+    const token = authHeader?.replace('Bearer ', '')
+    let customerEmail: string | undefined
+    let userId: string | undefined
+
+    if (token) {
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+      if (user) {
+        customerEmail = user.email ?? undefined
+        userId = user.id
+      }
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing`,
-      metadata: { plan },
+      customer_email: customerEmail,
+      metadata: { plan, user_id: userId ?? '' },
       allow_promotion_codes: true,
     })
 

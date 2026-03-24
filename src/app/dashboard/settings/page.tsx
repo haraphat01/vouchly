@@ -33,9 +33,13 @@ export default function SettingsPage() {
   }
 
   async function handleUpgrade(plan: 'starter' | 'pro') {
+    const { data: { session: authSession } } = await supabase.auth.getSession()
     const res = await fetch('/api/billing/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authSession?.access_token ? { 'Authorization': `Bearer ${authSession.access_token}` } : {}),
+      },
       body: JSON.stringify({ plan }),
     })
     const { url } = await res.json()
