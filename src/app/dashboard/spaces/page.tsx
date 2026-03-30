@@ -60,7 +60,7 @@ export default function SpacesPage() {
   }
 
   return (
-    <div style={{ padding: '2.5rem', maxWidth: 1000 }}>
+    <div className="dash-page" style={{ maxWidth: 1000 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Spaces</h1>
@@ -85,7 +85,7 @@ export default function SpacesPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {spaces.map(space => (
-            <div key={space.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div key={space.id} className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: (space.theme_color || '#d4751f') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>💬</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -100,23 +100,23 @@ export default function SpacesPage() {
                     )
                   })()}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '0.2rem' }}>
-                  {window?.location?.origin}/collect/<strong>{space.slug}</strong> · Created {formatDate(space.created_at)}
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '0.2rem', wordBreak: 'break-all' }}>
+                  /collect/<strong>{space.slug}</strong> · {formatDate(space.created_at)}
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button onClick={() => copyLink(space.slug)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                  <Copy size={13} /> {copied === space.slug ? 'Copied!' : 'Copy link'}
-                </button>
-                <Link href={`/collect/${space.slug}`} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                  <ExternalLink size={13} /> Preview
-                </Link>
-                <Link href={`/dashboard/spaces/${space.id}`} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                  <Edit size={13} /> Manage
-                </Link>
-                <button onClick={() => deleteSpace(space.id)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
-                  <Trash2 size={13} />
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                  <button onClick={() => copyLink(space.slug)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                    <Copy size={13} /> {copied === space.slug ? 'Copied!' : 'Copy link'}
+                  </button>
+                  <Link href={`/collect/${space.slug}`} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                    <ExternalLink size={13} /> Preview
+                  </Link>
+                  <Link href={`/dashboard/spaces/${space.id}`} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
+                    <Edit size={13} /> Manage
+                  </Link>
+                  <button onClick={() => deleteSpace(space.id)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

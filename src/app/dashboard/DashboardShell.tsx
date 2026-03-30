@@ -45,7 +45,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     )
   }
 
-  const Sidebar = () => (
+  const Sidebar = ({ onNavClick }: { onNavClick?: () => void }) => (
     <aside style={{ width: 240, background: 'white', borderRight: '1px solid #eceae6', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
       <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #eceae6', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ width: 30, height: 30, background: 'var(--brand)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -55,14 +55,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       </div>
 
       <div style={{ padding: '1rem', flex: 1, overflowY: 'auto' }}>
-        <Link href="/dashboard/spaces/new" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: '1rem', fontSize: '0.85rem' }}>
+        <Link href="/dashboard/spaces/new" className="btn btn-primary" onClick={onNavClick} style={{ width: '100%', justifyContent: 'center', marginBottom: '1rem', fontSize: '0.85rem' }}>
           <Plus size={15} /> New Space
         </Link>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
             return (
-              <Link key={href} href={href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.55rem 0.85rem', borderRadius: 8, textDecoration: 'none', fontSize: '0.9rem', fontWeight: active ? 600 : 400, color: active ? 'var(--brand)' : 'var(--ink-muted)', background: active ? 'var(--brand-light)' : 'transparent', transition: 'all 0.15s' }}>
+              <Link key={href} href={href} onClick={onNavClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.55rem 0.85rem', borderRadius: 8, textDecoration: 'none', fontSize: '0.9rem', fontWeight: active ? 600 : 400, color: active ? 'var(--brand)' : 'var(--ink-muted)', background: active ? 'var(--brand-light)' : 'transparent', transition: 'all 0.15s' }}>
                 <Icon size={16} /> {label}
               </Link>
             )
@@ -78,7 +78,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#7a3815' }}>Upgrade to unlock AI</span>
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginBottom: '0.6rem', lineHeight: 1.4 }}>AI rewriter, unlimited testimonials, no branding.</p>
-            <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem', width: '100%', justifyContent: 'center' }}>Upgrade — $19/mo</Link>
+            <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" onClick={onNavClick} style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem', width: '100%', justifyContent: 'center' }}>Upgrade — $19/mo</Link>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.5rem' }}>
@@ -99,28 +99,38 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--paper)' }}>
-      {/* Desktop sidebar */}
-      <div className="hidden md:block" style={{ display: 'flex' }}>
+      {/* Desktop sidebar — hidden on mobile, shown on md+ */}
+      <div className="hidden md:flex">
         <Sidebar />
       </div>
 
-      {/* Mobile header */}
-      <div style={{ display: 'none' }} className="md:hidden">
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'white', borderBottom: '1px solid #eceae6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, height: 28, background: 'var(--brand)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Quote size={13} color="white" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)' }}>vouchly</span>
+      {/* Mobile header — shown on mobile, hidden on md+ */}
+      <div className="md:hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'white', borderBottom: '1px solid #eceae6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 28, height: 28, background: 'var(--brand)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Quote size={13} color="white" />
           </div>
-          <button onClick={() => setMobileOpen(!mobileOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)' }}>
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)' }}>vouchly</span>
         </div>
+        <button onClick={() => setMobileOpen(!mobileOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', padding: '0.5rem' }}>
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
 
-      {/* Main */}
-      <main style={{ flex: 1, overflowX: 'hidden' }}>
+      {/* Mobile nav drawer overlay */}
+      {mobileOpen && (
+        <div className="md:hidden" style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+          {/* Backdrop */}
+          <div onClick={() => setMobileOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+          {/* Drawer panel */}
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, overflowY: 'auto' }}>
+            <Sidebar onNavClick={() => setMobileOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Main content — offset on mobile for the fixed header */}
+      <main className="dashboard-main" style={{ flex: 1, overflowX: 'hidden' }}>
         {children}
       </main>
     </div>

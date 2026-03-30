@@ -46,10 +46,10 @@ export default function SettingsPage() {
     if (url) window.location.href = url
   }
 
-  if (loading) return <div style={{ padding: '3rem' }}><div className="skeleton" style={{ height: 200 }} /></div>
+  if (loading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
 
   return (
-    <div style={{ padding: '2.5rem', maxWidth: 680 }}>
+    <div className="dash-page" style={{ maxWidth: 680 }}>
       <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Settings</h1>
       <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>Manage your account and subscription.</p>
 
@@ -124,7 +124,7 @@ export default function SettingsPage() {
                   return (
                     <div key={planKey} className="card" style={{ border: planKey === 'pro' ? '2px solid var(--brand)' : '1px solid #eceae6', position: 'relative' }}>
                       {planKey === 'pro' && <div style={{ position: 'absolute', top: -12, right: 20, background: 'var(--brand)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.75rem', borderRadius: 100 }}>Most popular</div>}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                         <div>
                           <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{plan.name}</h3>
                           <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700 }}>${plan.price}</span>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
 
           {profile?.plan !== 'free' && (
             <div style={{ padding: '1rem', background: 'var(--paper)', border: '1px solid #eceae6', borderRadius: 10, fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
-              To cancel or manage your subscription, contact support at <strong>support@vouchly.app</strong>. You can also manage billing through the Stripe customer portal.
+              To cancel or manage your subscription, contact support at <strong>support@vouchly.tech</strong>. You can also manage billing through the Stripe customer portal.
             </div>
           )}
         </div>

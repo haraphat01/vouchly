@@ -91,7 +91,7 @@ export default function NewSpacePage() {
 
   if (planLoading) {
     return (
-      <div style={{ padding: '3rem' }}>
+      <div className="dash-page">
         <div className="skeleton" style={{ height: 200 }} />
       </div>
     )
@@ -104,7 +104,7 @@ export default function NewSpacePage() {
   // Show upgrade wall if at space limit
   if (atSpaceLimit) {
     return (
-      <div style={{ padding: '2.5rem', maxWidth: 680 }}>
+      <div className="dash-page" style={{ maxWidth: 680 }}>
         <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
           <ArrowLeft size={15} /> Back to spaces
         </Link>
@@ -128,7 +128,7 @@ export default function NewSpacePage() {
   }
 
   return (
-    <div style={{ padding: '2.5rem', maxWidth: 680 }}>
+    <div className="dash-page" style={{ maxWidth: 680 }}>
       <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
         <ArrowLeft size={15} /> Back to spaces
       </Link>

@@ -42,7 +42,7 @@ export default function WallPage() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: 900, width: '100%', padding: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', maxWidth: 900, width: '100%', padding: '2rem' }}>
           {[...Array(6)].map((_, i) => <div key={i} className="skeleton" style={{ height: 160 }} />)}
         </div>
       </div>
@@ -58,14 +58,14 @@ export default function WallPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper)', padding: '3rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--paper)', padding: 'clamp(1.5rem, 5vw, 3rem) 1.25rem' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{ width: 60, height: 60, borderRadius: 15, background: brandColor, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
             <Quote size={28} color="white" />
           </div>
-          <h1 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>{t('title', { name: space.name })}</h1>
+          <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', marginBottom: '0.5rem' }}>{t('title', { name: space.name })}</h1>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
             {testimonials.filter(te => te.rating).length > 0 && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', border: '1px solid #eceae6', borderRadius: 100, padding: '0.45rem 1.1rem' }}>

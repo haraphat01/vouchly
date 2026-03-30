@@ -95,11 +95,11 @@ export default function SpaceDetailPage() {
   const wallUrl = space ? `${typeof window !== 'undefined' ? window.location.origin : ''}/wall/${space.slug}` : ''
   const embedCode = space ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed.js" data-space="${space.slug}" async></script>` : ''
 
-  if (loading) return <div style={{ padding: '3rem' }}><div className="skeleton" style={{ height: 200 }} /></div>
-  if (!space) return <div style={{ padding: '3rem' }}>Space not found.</div>
+  if (loading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
+  if (!space) return <div className="dash-page">Space not found.</div>
 
   return (
-    <div style={{ padding: '2.5rem', maxWidth: 1000 }}>
+    <div className="dash-page" style={{ maxWidth: 1000 }}>
       {/* Header */}
       <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
         <ArrowLeft size={15} /> All spaces
@@ -109,10 +109,10 @@ export default function SpaceDetailPage() {
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{space.name}</h1>
           <p style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>{testimonials.length} testimonials · {testimonials.filter(t => t.status === 'pending').length} pending</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="space-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button onClick={() => setShowInvite(!showInvite)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><Mail size={14} /> Invite</button>
           <button onClick={() => setShowEmbed(!showEmbed)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><Code2 size={14} /> Embed</button>
-          <Link href={collectUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Collection page</Link>
+          <Link href={collectUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Collect</Link>
           <Link href={wallUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Wall</Link>
         </div>
       </div>

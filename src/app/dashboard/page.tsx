@@ -41,8 +41,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '3rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="dash-page">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           {[...Array(4)].map((_, i) => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 12 }} />)}
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ padding: '2.5rem', maxWidth: 1000 }}>
+    <div className="dash-page" style={{ maxWidth: 1000 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Dashboard</h1>

@@ -178,7 +178,7 @@ export default function CollectPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper)', padding: '3rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--paper)', padding: 'clamp(1.5rem, 5vw, 3rem) 1.25rem' }}>
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -214,7 +214,7 @@ export default function CollectPage() {
             {/* Info */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h3 style={{ fontSize: '0.95rem', color: 'var(--ink-muted)', fontWeight: 600, margin: 0 }}>{t('your_info')}</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
                 <div style={{ gridColumn: '1/-1' }}>
                   <label className="label">{t('full_name')} *</label>
                   <input className="input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" required />
