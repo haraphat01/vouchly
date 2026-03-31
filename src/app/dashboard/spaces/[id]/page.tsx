@@ -27,6 +27,10 @@ export default function SpaceDetailPage() {
   const [showEmbed, setShowEmbed] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [brandColor, setBrandColor] = useState('#d4751f')
+  const [colorInput, setColorInput] = useState('#d4751f')
+  const [savingColor, setSavingColor] = useState(false)
+  const [colorSaved, setColorSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -39,6 +43,7 @@ export default function SpaceDetailPage() {
       setSpace(sp)
       setTestimonials(te || [])
       setProfile(prof)
+      if (sp?.theme_color) { setBrandColor(sp.theme_color); setColorInput(sp.theme_color) }
       setLoading(false)
     }
     load()
@@ -83,6 +88,15 @@ export default function SpaceDetailPage() {
     setInviteEmail('')
     setInviteName('')
     setTimeout(() => setInviteSent(false), 3000)
+  }
+
+  async function saveBrandColor() {
+    setSavingColor(true)
+    await supabase.from('spaces').update({ theme_color: brandColor }).eq('id', id)
+    setSpace(prev => prev ? { ...prev, theme_color: brandColor } : prev)
+    setSavingColor(false)
+    setColorSaved(true)
+    setTimeout(() => setColorSaved(false), 2000)
   }
 
   function copyText(text: string, key: string) {
@@ -134,6 +148,98 @@ export default function SpaceDetailPage() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* Brand color */}
+      <div className="card" style={{ marginBottom: '1.5rem', background: 'white' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>Brand color</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>Used in your embed widget, collect page, and wall page.</div>
+
+        {/* Preview */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '0.85rem 1rem', background: 'var(--paper)', borderRadius: 10, border: '1px solid #eceae6' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 10, background: brandColor, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: '0.15rem' }}>Selected color</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>{brandColor.toUpperCase()}</div>
+          </div>
+        </div>
+
+        {/* Preset swatches */}
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Presets</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {[
+              '#d4751f','#e85d2f','#c0392b','#e74c8b','#9b59b6','#7c5cbf',
+              '#3498db','#1a5fa8','#0891b2','#1a7a7a','#2e7d4f','#27ae60',
+              '#f39c12','#e67e22','#1a1713','#64748b',
+            ].map(c => (
+              <button key={c} type="button" onClick={() => { setBrandColor(c); setColorInput(c) }}
+                title={c}
+                style={{ width: 30, height: 30, borderRadius: 6, background: c, border: brandColor === c ? '3px solid var(--ink)' : '2px solid transparent', cursor: 'pointer', flexShrink: 0, transition: 'transform 0.1s' }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.15)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Custom input row */}
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          {/* Native color picker */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color picker</div>
+            <input type="color" value={brandColor} onChange={e => { setBrandColor(e.target.value); setColorInput(e.target.value) }}
+              style={{ width: 48, height: 36, borderRadius: 8, border: '1px solid #d5d1c9', cursor: 'pointer', padding: 2 }} />
+          </div>
+
+          {/* Hex code input */}
+          <div style={{ flex: '1 1 140px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paste hex code</div>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <input
+                className="input"
+                value={colorInput}
+                onChange={e => setColorInput(e.target.value)}
+                onBlur={() => {
+                  const val = colorInput.startsWith('#') ? colorInput : '#' + colorInput
+                  if (/^#[0-9a-fA-F]{6}$/.test(val)) { setBrandColor(val); setColorInput(val) }
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const val = colorInput.startsWith('#') ? colorInput : '#' + colorInput
+                    if (/^#[0-9a-fA-F]{6}$/.test(val)) { setBrandColor(val); setColorInput(val) }
+                  }
+                }}
+                placeholder="#000000"
+                maxLength={7}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.875rem', width: '100%' }}
+              />
+            </div>
+          </div>
+
+          {/* Random generator */}
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate</div>
+            <button type="button" className="btn btn-secondary" style={{ fontSize: '0.82rem' }}
+              onClick={() => {
+                const palettes = [
+                  ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261'],
+                  ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981'],
+                  ['#0ea5e9','#14b8a6','#84cc16','#f97316','#ef4444'],
+                  ['#1d4ed8','#7c3aed','#be185d','#b45309','#047857'],
+                  ['#334155','#0f766e','#b45309','#9333ea','#dc2626'],
+                ]
+                const flat = palettes.flat().filter(c => c !== brandColor)
+                const pick = flat[Math.floor(Math.random() * flat.length)]
+                setBrandColor(pick); setColorInput(pick)
+              }}
+            >🎨 Suggest</button>
+          </div>
+        </div>
+
+        <button onClick={saveBrandColor} className="btn btn-primary" disabled={savingColor} style={{ fontSize: '0.875rem' }}>
+          {colorSaved ? '✓ Color saved!' : savingColor ? 'Saving…' : 'Save brand color'}
+        </button>
       </div>
 
       {/* Proof Score™ */}

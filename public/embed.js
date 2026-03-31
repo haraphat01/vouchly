@@ -98,6 +98,14 @@
     }
     .pp-branding a { color: #b8b3a8; text-decoration: none; }
     .pp-branding a:hover { color: #7a7367; }
+    .pp-video {
+      width: 100%;
+      border-radius: 8px;
+      margin: 12px 0 8px;
+      display: block;
+      background: #1a1713;
+      max-height: 260px;
+    }
     .pp-cta {
       display: inline-block;
       margin-top: 16px;
@@ -149,11 +157,13 @@
         ).join('') : '';
         const content = t.ai_enhanced_content || t.content || '';
         const role = [t.submitter_role, t.submitter_company].filter(Boolean).join(' · ');
+        const videoHtml = t.video_url ? `<video class="pp-video" src="${t.video_url}" controls playsinline></video>` : '';
 
         return `<div class="pp-card">
           <span class="pp-quote-mark">"</span>
           ${stars ? `<div class="pp-stars">${stars}</div>` : ''}
-          <p class="pp-content">${escapeHtml(content)}</p>
+          ${videoHtml}
+          ${content ? `<p class="pp-content">${escapeHtml(content)}</p>` : ''}
           <div class="pp-author">
             <div class="pp-avatar" style="background:${brandColor}22;color:${brandColor}">${initials}</div>
             <div>

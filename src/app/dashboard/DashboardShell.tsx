@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -12,6 +12,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0)
+  }, [pathname])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -98,14 +103,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   )
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--paper)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--paper)' }}>
       {/* Desktop sidebar — hidden on mobile, shown on md+ */}
-      <div className="hidden md:flex">
+      <div className="hidden md:flex" style={{ flexShrink: 0 }}>
         <Sidebar />
       </div>
 
       {/* Mobile header — shown on mobile, hidden on md+ */}
-      <div className="md:hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'white', borderBottom: '1px solid #eceae6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 40 }}>
+      <div className="flex md:hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'white', borderBottom: '1px solid #eceae6', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 28, height: 28, background: 'var(--brand)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Quote size={13} color="white" />
@@ -129,8 +134,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </div>
       )}
 
-      {/* Main content — offset on mobile for the fixed header */}
-      <main className="dashboard-main" style={{ flex: 1, overflowX: 'hidden' }}>
+      {/* Main content — scrolls independently, offset on mobile for the fixed header */}
+      <main ref={mainRef} className="dashboard-main" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {children}
       </main>
     </div>
