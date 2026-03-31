@@ -23,6 +23,8 @@ export default function NewSpacePage() {
     theme_color: '#d4751f',
     collect_text: true,
     collect_video: false,
+    rating_required: false,
+    auto_approve: false,
     questions: ['What is your name?', 'What do you love most about our product?'],
   })
   const [newQuestion, setNewQuestion] = useState('')
@@ -77,6 +79,8 @@ export default function NewSpacePage() {
         theme_color: form.theme_color,
         collect_text: form.collect_text,
         collect_video: form.collect_video,
+        rating_required: form.rating_required,
+        auto_approve: form.auto_approve,
         questions: form.questions,
       }),
     })
@@ -179,6 +183,19 @@ export default function NewSpacePage() {
                   onChange={e => setForm(f => ({ ...f, collect_text: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
                 💬 Text testimonials
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={form.rating_required}
+                  onChange={e => setForm(f => ({ ...f, rating_required: e.target.checked }))}
+                  style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
+                ⭐ Rating required
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={form.auto_approve}
+                  onChange={e => setForm(f => ({ ...f, auto_approve: e.target.checked }))}
+                  style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
+                ✅ Auto-approve submissions
               </label>
 
               {/* Video testimonials — Pro only */}

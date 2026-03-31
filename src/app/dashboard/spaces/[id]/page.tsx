@@ -32,6 +32,10 @@ export default function SpaceDetailPage() {
   const [colorInput, setColorInput] = useState('#d4751f')
   const [savingColor, setSavingColor] = useState(false)
   const [colorSaved, setColorSaved] = useState(false)
+  const [ratingRequired, setRatingRequired] = useState(false)
+  const [autoApprove, setAutoApprove] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -45,6 +49,7 @@ export default function SpaceDetailPage() {
       setTestimonials(te || [])
       setProfile(prof)
       if (sp?.theme_color) { setBrandColor(sp.theme_color); setColorInput(sp.theme_color) }
+      if (sp) { setRatingRequired(sp.rating_required ?? false); setAutoApprove(sp.auto_approve ?? false) }
       setLoading(false)
     }
     load()
@@ -103,6 +108,15 @@ export default function SpaceDetailPage() {
       onDismiss: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
       onAutoClose: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
     })
+  }
+
+  async function saveSettings() {
+    setSavingSettings(true)
+    await supabase.from('spaces').update({ rating_required: ratingRequired, auto_approve: autoApprove }).eq('id', id)
+    setSpace(prev => prev ? { ...prev, rating_required: ratingRequired, auto_approve: autoApprove } : prev)
+    setSavingSettings(false)
+    setSettingsSaved(true)
+    setTimeout(() => setSettingsSaved(false), 2000)
   }
 
   async function saveBrandColor() {
@@ -257,6 +271,33 @@ export default function SpaceDetailPage() {
         </button>
       </div>
 
+      {/* Collection settings */}
+      <div className="card" style={{ marginBottom: '1.5rem', background: 'white' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>Collection settings</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>Control how submissions are handled for this space.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={ratingRequired} onChange={e => setRatingRequired(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer', marginTop: 2, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>⭐ Rating required</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>Submitters must choose a star rating before they can submit.</div>
+            </div>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer', marginTop: 2, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>✅ Auto-approve submissions</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>New testimonials go straight to approved without manual review.</div>
+            </div>
+          </label>
+        </div>
+        <button onClick={saveSettings} className="btn btn-primary" disabled={savingSettings} style={{ fontSize: '0.875rem' }}>
+          {settingsSaved ? '✓ Saved!' : savingSettings ? 'Saving…' : 'Save settings'}
+        </button>
+      </div>
+
       {/* Proof Score™ */}
       {(() => {
         const ps = calculateProofScore(testimonials)
@@ -396,25 +437,35 @@ export default function SpaceDetailPage() {
               </div>
 
               {/* Content */}
-              {(t.video_url || t.content) && (
-                <div>
+              {(t.video_url || t.content || t.image_url || t.answers) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {t.video_url && (
-                    <video
-                      src={t.video_url}
-                      controls
-                      style={{ width: '100%', maxHeight: 280, borderRadius: 8, background: '#1a1713', display: 'block' }}
-                    />
+                    <video src={t.video_url} controls style={{ width: '100%', maxHeight: 280, borderRadius: 8, background: '#1a1713', display: 'block' }} />
+                  )}
+                  {t.image_url && (
+                    <img src={t.image_url} alt="Attached" style={{ maxWidth: '100%', maxHeight: 260, borderRadius: 8, objectFit: 'cover', display: 'block' }} />
                   )}
                   {t.content && (
                     <>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: t.video_url ? '0.75rem 0 0' : 0 }}>{t.content}</p>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.content}</p>
                       {t.ai_enhanced_content && (
-                        <div style={{ marginTop: '0.75rem', background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
+                        <div style={{ background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
                           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> AI-polished version</div>
                           <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.ai_enhanced_content}</p>
                         </div>
                       )}
                     </>
+                  )}
+                  {t.answers && Object.keys(t.answers).length > 0 && (
+                    <div style={{ background: 'var(--paper)', borderRadius: 8, padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom answers</div>
+                      {Object.entries(t.answers).map(([q, a]) => (
+                        <div key={q}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.15rem' }}>{q}</div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.55 }}>{a}</div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

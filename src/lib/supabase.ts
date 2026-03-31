@@ -33,6 +33,8 @@ export type Space = {
   questions: string[]
   collect_video: boolean
   collect_text: boolean
+  rating_required: boolean
+  auto_approve: boolean
   theme_color: string
   widget_theme: 'light' | 'dark' | 'auto'
   is_active: boolean
@@ -50,8 +52,10 @@ export type Testimonial = {
   submitter_avatar_url?: string
   content?: string
   video_url?: string
+  image_url?: string
   video_thumbnail_url?: string
   ai_enhanced_content?: string
+  answers?: Record<string, string>
   rating?: number
   status: 'pending' | 'approved' | 'archived'
   is_featured: boolean

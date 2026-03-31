@@ -18,11 +18,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, rating } = body
+    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers, _hp } = body
     if (!space_id || !submitter_name) return NextResponse.json({ error: 'space_id and submitter_name are required' }, { status: 400 })
 
+    // Honeypot check — bots fill hidden fields, humans don't
+    if (_hp) return NextResponse.json({ testimonial: { id: 'spam' } }) // silent success to fool bots
+
     // Look up the space and its owner's plan to enforce limits
-    const { data: space } = await supabaseAdmin.from('spaces').select('name, user_id, collect_video').eq('id', space_id).single()
+    const { data: space } = await supabaseAdmin.from('spaces').select('name, user_id, collect_video, auto_approve, rating_required').eq('id', space_id).single()
 
     if (space) {
       const { data: ownerProfile } = await supabaseAdmin.from('profiles').select('plan').eq('id', space.user_id).single()
@@ -45,8 +48,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const status = space?.auto_approve ? 'approved' : 'pending'
     const { data: testimonial, error } = await supabaseAdmin.from('testimonials').insert({
-      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, rating, status: 'pending',
+      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers: answers || null, status,
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

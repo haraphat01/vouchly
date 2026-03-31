@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
-import { Star, Send, Video, FileText, Loader2, CheckCircle2, Quote } from 'lucide-react'
+import { Star, Send, Video, FileText, Loader2, CheckCircle2, Quote, ImagePlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
@@ -28,6 +28,10 @@ export default function CollectPage() {
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [form, setForm] = useState({ name: '', email: '', role: '', company: '', content: '' })
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [honeypot, setHoneypot] = useState('')
   const [recording, setRecording] = useState(false)
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null)
   const [removeBranding, setRemoveBranding] = useState(false)
@@ -102,7 +106,12 @@ export default function CollectPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!space) return
+    if (space.rating_required && !rating) {
+      toast.error('Please select a star rating before submitting.')
+      return
+    }
     setSubmitting(true)
+
     let videoUrl = null
     if (mode === 'video' && videoBlob) {
       const fd = new FormData()
@@ -119,6 +128,24 @@ export default function CollectPage() {
         return
       }
     }
+
+    let imageUrl = null
+    if (imageFile) {
+      const fd = new FormData()
+      fd.append('image', imageFile)
+      fd.append('spaceId', space.id)
+      const uploadRes = await fetch('/api/images/upload', { method: 'POST', body: fd })
+      if (uploadRes.ok) {
+        const { url } = await uploadRes.json()
+        imageUrl = url
+      } else {
+        const { error } = await uploadRes.json()
+        toast.error(error || 'Image upload failed. Please try again.')
+        setSubmitting(false)
+        return
+      }
+    }
+
     const res = await fetch('/api/testimonials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -131,7 +158,10 @@ export default function CollectPage() {
         submitter_company: form.company,
         content: mode === 'text' ? form.content : null,
         video_url: videoUrl,
+        image_url: imageUrl,
         rating: rating || null,
+        answers: Object.keys(answers).length > 0 ? answers : null,
+        _hp: honeypot,
       }),
     })
     setSubmitting(false)
@@ -242,9 +272,23 @@ export default function CollectPage() {
               </div>
             </div>
 
+            {/* Honeypot — hidden from humans, traps bots */}
+            <input
+              type="text"
+              value={honeypot}
+              onChange={e => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              aria-hidden="true"
+              autoComplete="off"
+              style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+            />
+
             {/* Rating */}
             <div className="card">
-              <label className="label" style={{ marginBottom: '0.75rem' }}>{t('rating_label')}</label>
+              <label className="label" style={{ marginBottom: '0.75rem' }}>
+                {t('rating_label')}
+                {space.rating_required && <span style={{ color: '#c0392b', marginLeft: 4 }}>*</span>}
+              </label>
               <div style={{ display: 'flex', gap: 6 }}>
                 {[1, 2, 3, 4, 5].map(n => (
                   <button key={n} type="button"
@@ -256,7 +300,30 @@ export default function CollectPage() {
                   </button>
                 ))}
               </div>
+              {space.rating_required && !rating && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: '0.4rem' }}>A rating is required for this space.</p>
+              )}
             </div>
+
+            {/* Custom questions */}
+            {space.questions && space.questions.length > 0 && (
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h3 style={{ fontSize: '0.95rem', color: 'var(--ink-muted)', fontWeight: 600, margin: 0 }}>A few questions</h3>
+                {space.questions.map((q, i) => (
+                  <div key={i}>
+                    <label className="label" style={{ marginBottom: '0.4rem' }}>{q}</label>
+                    <textarea
+                      className="input"
+                      rows={2}
+                      style={{ resize: 'vertical' }}
+                      value={answers[q] || ''}
+                      onChange={e => setAnswers(prev => ({ ...prev, [q]: e.target.value }))}
+                      placeholder="Your answer…"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Text testimonial + AI coach */}
             {(!space.collect_video || mode === 'text') && (
@@ -315,6 +382,37 @@ export default function CollectPage() {
                 )}
               </div>
             )}
+
+            {/* Image upload */}
+            <div className="card">
+              <label className="label" style={{ marginBottom: '0.6rem' }}>
+                Attach an image <span style={{ color: 'var(--ink-subtle)', fontWeight: 400 }}>(optional)</span>
+              </label>
+              {imagePreview ? (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block' }} />
+                  <button type="button" onClick={() => { setImageFile(null); setImagePreview(null) }}
+                    style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <X size={13} color="white" />
+                  </button>
+                </div>
+              ) : (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.75rem 1rem', border: '1.5px dashed #d5d1c9', borderRadius: 10, color: 'var(--ink-muted)', fontSize: '0.875rem', transition: 'border-color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = brandColor)}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#d5d1c9')}>
+                  <ImagePlus size={18} color={brandColor} />
+                  Click to upload a screenshot or photo
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setImageFile(file)
+                      setImagePreview(URL.createObjectURL(file))
+                    }} />
+                </label>
+              )}
+              <p style={{ fontSize: '0.72rem', color: 'var(--ink-subtle)', marginTop: '0.4rem' }}>JPEG, PNG, WebP or GIF · max 10 MB</p>
+            </div>
 
             {/* Video */}
             {mode === 'video' && space.collect_video && (

@@ -123,6 +123,9 @@ export default function WallPage() {
                 {te.video_url && (
                   <video src={te.video_url} controls style={{ width: '100%', borderRadius: 8, marginBottom: '0.75rem', marginTop: '1rem' }} />
                 )}
+                {te.image_url && (
+                  <img src={te.image_url} alt="Attached" style={{ width: '100%', borderRadius: 8, marginBottom: '0.75rem', marginTop: '1rem', objectFit: 'cover', maxHeight: 240 }} />
+                )}
                 {(te.ai_enhanced_content || te.content) && (
                   <p style={{ fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--ink)', marginBottom: '1.25rem' }}>
                     {te.ai_enhanced_content || te.content}
