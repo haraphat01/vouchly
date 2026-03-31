@@ -56,6 +56,7 @@ export type Testimonial = {
   video_thumbnail_url?: string
   ai_enhanced_content?: string
   answers?: Record<string, string>
+  campaign?: string
   rating?: number
   status: 'pending' | 'approved' | 'archived'
   is_featured: boolean

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
@@ -19,6 +19,8 @@ const TIP_STYLES: Record<CoachTip['type'], { bg: string; border: string; color: 
 
 export default function CollectPage() {
   const { id: slug } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const campaign = searchParams.get('ref')
   const t = useTranslations('collect')
   const [space, setSpace] = useState<Space | null>(null)
   const [loading, setLoading] = useState(true)
@@ -161,6 +163,7 @@ export default function CollectPage() {
         image_url: imageUrl,
         rating: rating || null,
         answers: Object.keys(answers).length > 0 ? answers : null,
+        campaign: campaign || null,
         _hp: honeypot,
       }),
     })

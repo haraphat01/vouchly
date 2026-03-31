@@ -131,6 +131,21 @@ export default function WallPage() {
                     {te.ai_enhanced_content || te.content}
                   </p>
                 )}
+                {/* Social share */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <button onClick={async () => {
+                    const shareUrl = `${window.location.origin}/share/${te.id}`
+                    const shareText = `"${(te.ai_enhanced_content || te.content || '').slice(0, 160)}…" — ${te.submitter_name}`
+                    if (navigator.share) {
+                      await navigator.share({ title: `${te.submitter_name}'s testimonial`, text: shareText, url: shareUrl })
+                    } else {
+                      navigator.clipboard.writeText(shareUrl)
+                    }
+                  }}
+                    style={{ fontSize: '0.72rem', padding: '0.3rem 0.7rem', background: 'white', border: '1px solid #eceae6', borderRadius: 6, cursor: 'pointer', fontWeight: 600, color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    ↗ Share
+                  </button>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{ width: 34, height: 34, borderRadius: '50%', background: brandColor + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: brandColor, flexShrink: 0 }}>
                     {te.submitter_name.split(' ').map((n: string) => n[0]).join('')}

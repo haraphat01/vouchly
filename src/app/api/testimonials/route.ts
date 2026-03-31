@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers, _hp } = body
+    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers, campaign, _hp } = body
     if (!space_id || !submitter_name) return NextResponse.json({ error: 'space_id and submitter_name are required' }, { status: 400 })
 
     // Honeypot check — bots fill hidden fields, humans don't
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const status = space?.auto_approve ? 'approved' : 'pending'
     const { data: testimonial, error } = await supabaseAdmin.from('testimonials').insert({
-      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers: answers || null, status,
+      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, image_url, rating, answers: answers || null, campaign: campaign || null, status,
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

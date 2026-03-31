@@ -6,8 +6,9 @@ import { supabase } from '@/lib/supabase'
 import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
-import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp, Trash2 } from 'lucide-react'
+import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp, Trash2, QrCode, Share2, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
+import QRCode from 'react-qr-code'
 import EmbedWizard from '@/components/EmbedWizard'
 import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
@@ -27,6 +28,9 @@ export default function SpaceDetailPage() {
   const [inviteSent, setInviteSent] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
+  const [showCampaign, setShowCampaign] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [customSource, setCustomSource] = useState('')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [brandColor, setBrandColor] = useState('#d4751f')
   const [colorInput, setColorInput] = useState('#d4751f')
@@ -128,6 +132,19 @@ export default function SpaceDetailPage() {
     setTimeout(() => setColorSaved(false), 2000)
   }
 
+  function downloadQR() {
+    const svg = document.getElementById('space-qr-code')
+    if (!svg) return
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const blob = new Blob([svgData], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${space?.slug}-qr.svg`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function copyText(text: string, key: string) {
     navigator.clipboard.writeText(text)
     setCopied(key)
@@ -155,11 +172,87 @@ export default function SpaceDetailPage() {
         </div>
         <div className="space-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button onClick={() => setShowInvite(!showInvite)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><Mail size={14} /> Invite</button>
+          <button onClick={() => setShowCampaign(!showCampaign)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><Link2 size={14} /> Campaign</button>
+          <button onClick={() => setShowQR(!showQR)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><QrCode size={14} /> QR Code</button>
           <button onClick={() => setShowEmbed(!showEmbed)} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><Code2 size={14} /> Embed</button>
           <Link href={collectUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Collect</Link>
           <Link href={wallUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Wall</Link>
         </div>
       </div>
+
+      {/* Campaign links panel */}
+      {showCampaign && (
+        <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--paper)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+            <Link2 size={15} color="var(--brand)" />
+            <h3 style={{ fontSize: '1rem', margin: 0 }}>Campaign links</h3>
+          </div>
+          <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>
+            Share these trackable links to see which channel drives the most testimonials.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+            {[
+              { label: 'Instagram', icon: '📸', ref: 'instagram' },
+              { label: 'TikTok', icon: '🎵', ref: 'tiktok' },
+              { label: 'Email', icon: '📧', ref: 'email' },
+              { label: 'WhatsApp', icon: '💬', ref: 'whatsapp' },
+              { label: 'LinkedIn', icon: '💼', ref: 'linkedin' },
+              { label: 'Facebook', icon: '👥', ref: 'facebook' },
+              { label: 'Twitter / X', icon: '🐦', ref: 'twitter' },
+              { label: 'Flyer / Print', icon: '🖨️', ref: 'print' },
+              { label: 'Podcast', icon: '🎙️', ref: 'podcast' },
+              { label: 'YouTube', icon: '▶️', ref: 'youtube' },
+            ].map(({ label, icon, ref }) => {
+              const url = `${collectUrl}?ref=${ref}`
+              const key = `campaign-${ref}`
+              return (
+                <div key={ref} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', border: '1px solid #eceae6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', width: 90, flexShrink: 0 }}>{label}</span>
+                  <span style={{ flex: 1, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
+                  <button onClick={() => copyText(url, key)} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', flexShrink: 0, fontSize: '0.75rem' }}>
+                    <Copy size={12} /> {copied === key ? '✓' : 'Copy'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input className="input" value={customSource} onChange={e => setCustomSource(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+              placeholder="custom-source" style={{ flex: 1, fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }} />
+            <button onClick={() => { if (customSource) copyText(`${collectUrl}?ref=${customSource}`, 'campaign-custom') }}
+              className="btn btn-primary" style={{ fontSize: '0.82rem', flexShrink: 0 }}>
+              <Copy size={13} /> {copied === 'campaign-custom' ? '✓ Copied!' : 'Copy link'}
+            </button>
+          </div>
+          {customSource && <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: '0.4rem', fontFamily: 'var(--font-mono)' }}>{collectUrl}?ref={customSource}</p>}
+        </div>
+      )}
+
+      {/* QR Code panel */}
+      {showQR && (
+        <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--paper)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+            <QrCode size={15} color="var(--brand)" />
+            <h3 style={{ fontSize: '1rem', margin: 0 }}>QR Code</h3>
+          </div>
+          <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>
+            Print or display this QR code in-store, on packaging, or in receipts. Scanning it opens your collection page.
+          </p>
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ background: 'white', padding: '1rem', borderRadius: 12, border: '1px solid #eceae6', display: 'inline-block' }}>
+              <QRCode id="space-qr-code" value={collectUrl} size={160} fgColor="#1a1713" bgColor="white" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'center' }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{collectUrl}</div>
+              <button onClick={downloadQR} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>⬇ Download SVG</button>
+              <button onClick={() => copyText(collectUrl, 'qr-url')} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+                <Copy size={13} /> {copied === 'qr-url' ? '✓ Copied!' : 'Copy link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick links */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -485,6 +578,12 @@ export default function SpaceDetailPage() {
                 {t.status !== 'pending' && (
                   <button onClick={() => updateStatus(t.id, 'pending')} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
                     Reset to pending
+                  </button>
+                )}
+                {t.status === 'approved' && (
+                  <button onClick={() => copyText(`${typeof window !== 'undefined' ? window.location.origin : ''}/share/${t.id}`, `share-${t.id}`)}
+                    className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
+                    <Share2 size={12} /> {copied === `share-${t.id}` ? '✓ Link copied!' : 'Share'}
                   </button>
                 )}
                 <button onClick={() => deleteTestimonial(t.id, t.submitter_name)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b', marginLeft: 'auto' }}>
