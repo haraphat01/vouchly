@@ -7,6 +7,7 @@ import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
 import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp } from 'lucide-react'
+import EmbedWizard from '@/components/EmbedWizard'
 import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
 
@@ -216,19 +217,13 @@ export default function SpaceDetailPage() {
         </div>
       )}
 
-      {/* Embed panel */}
-      {showEmbed && (
-        <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--paper)' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Embed widget</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '0.75rem' }}>Paste this single line anywhere on your website to show your testimonial wall:</p>
-          <div style={{ background: '#1a1713', borderRadius: 8, padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#faecd8', flex: 1, wordBreak: 'break-all' }}>{embedCode}</code>
-            <button onClick={() => copyText(embedCode, 'embed')} className="btn btn-ghost" style={{ color: '#faecd8', padding: '0.35rem 0.5rem', flexShrink: 0 }}>
-              <Copy size={14} /> {copied === 'embed' ? '✓' : ''}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Embed wizard modal */}
+      <EmbedWizard
+        open={showEmbed}
+        onClose={() => setShowEmbed(false)}
+        embedCode={embedCode}
+        spaceSlug={space.slug}
+      />
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', borderBottom: '1px solid #eceae6', paddingBottom: '-1px' }}>
@@ -280,14 +275,25 @@ export default function SpaceDetailPage() {
               </div>
 
               {/* Content */}
-              {t.content && (
+              {(t.video_url || t.content) && (
                 <div>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.content}</p>
-                  {t.ai_enhanced_content && (
-                    <div style={{ marginTop: '0.75rem', background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> AI-polished version</div>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.ai_enhanced_content}</p>
-                    </div>
+                  {t.video_url && (
+                    <video
+                      src={t.video_url}
+                      controls
+                      style={{ width: '100%', maxHeight: 280, borderRadius: 8, background: '#1a1713', display: 'block' }}
+                    />
+                  )}
+                  {t.content && (
+                    <>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: t.video_url ? '0.75rem 0 0' : 0 }}>{t.content}</p>
+                      {t.ai_enhanced_content && (
+                        <div style={{ marginTop: '0.75rem', background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> AI-polished version</div>
+                          <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.ai_enhanced_content}</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

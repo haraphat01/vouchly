@@ -104,11 +104,18 @@ export default function CollectPage() {
     setSubmitting(true)
     let videoUrl = null
     if (mode === 'video' && videoBlob) {
-      const file = new File([videoBlob], `${Date.now()}.webm`, { type: 'video/webm' })
-      const { data } = await supabase.storage.from('videos').upload(`${space.id}/${file.name}`, file)
-      if (data) {
-        const { data: urlData } = supabase.storage.from('videos').getPublicUrl(data.path)
-        videoUrl = urlData.publicUrl
+      const fd = new FormData()
+      fd.append('video', new File([videoBlob], `${Date.now()}.webm`, { type: 'video/webm' }))
+      fd.append('spaceId', space.id)
+      const uploadRes = await fetch('/api/videos/upload', { method: 'POST', body: fd })
+      if (uploadRes.ok) {
+        const { url } = await uploadRes.json()
+        videoUrl = url
+      } else {
+        const { error } = await uploadRes.json()
+        alert(error || 'Video upload failed. Please try again.')
+        setSubmitting(false)
+        return
       }
     }
     const res = await fetch('/api/testimonials', {

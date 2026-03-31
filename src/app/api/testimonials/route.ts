@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, rating } = body
+    const { space_id, type, submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, rating } = body
     if (!space_id || !submitter_name) return NextResponse.json({ error: 'space_id and submitter_name are required' }, { status: 400 })
 
     // Look up the space and its owner's plan to enforce limits
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: testimonial, error } = await supabaseAdmin.from('testimonials').insert({
-      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, rating, status: 'pending',
+      space_id, type: type || 'text', submitter_name, submitter_email, submitter_role, submitter_company, content, video_url, rating, status: 'pending',
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
