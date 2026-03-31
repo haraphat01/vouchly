@@ -76,7 +76,7 @@ export default async function Home() {
           <Zap size={13} /> {t('hero_badge')}
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 7vw, 4.5rem)', fontWeight: 700, lineHeight: 1.1, marginBottom: '1.25rem', letterSpacing: '-0.03em', color: 'var(--ink)' }}>
-          {t('hero_headline1')}{' '}
+          {t('hero_headline1')}<br />
           <span style={{ color: 'var(--brand)' }}>{t('hero_headline2')}</span>
         </h1>
         <p style={{ fontSize: 'clamp(1rem, 3vw, 1.15rem)', color: 'var(--ink-muted)', maxWidth: 540, margin: '0 auto clamp(1.5rem, 5vw, 2.5rem)', lineHeight: 1.7 }}>
@@ -107,6 +107,30 @@ export default async function Home() {
           ))}
         </div>
       </div>
+
+      {/* Problem section */}
+      <section style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 4rem) 1.25rem', textAlign: 'center' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 700, color: 'var(--ink)', marginBottom: '1rem', lineHeight: 1.25 }}>
+          You have happy customers.<br />
+          <span style={{ color: 'var(--ink-muted)', fontWeight: 500 }}>But no one else knows it.</span>
+        </h2>
+        <p style={{ fontSize: 'clamp(0.95rem, 2.5vw, 1.1rem)', color: 'var(--ink-muted)', lineHeight: 1.75, marginBottom: '2rem' }}>
+          92% of buyers read reviews before they buy. If your site has no testimonials — or weak ones like "great service, 5 stars" — you're invisible to the customers who need convincing most.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          {[
+            { icon: '😬', problem: 'Asking for testimonials feels awkward', fix: 'A beautiful branded form does the asking for you' },
+            { icon: '😞', problem: 'The ones you get are too vague to convert', fix: 'AI rewrites them into compelling, specific stories' },
+            { icon: '😩', problem: 'Nowhere to display them that looks good', fix: 'One script tag creates a stunning wall on your site' },
+          ].map(({ icon, problem, fix }) => (
+            <div key={problem} style={{ background: 'white', border: '1px solid #eceae6', borderRadius: 'var(--radius-lg)', padding: '1.25rem', textAlign: 'left' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{icon}</div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '0.6rem', lineHeight: 1.5 }}>{problem}</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--brand)', fontWeight: 600, lineHeight: 1.5 }}>→ {fix}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* How it works */}
       <section id="how-it-works" style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem' }}>
@@ -195,11 +219,19 @@ export default async function Home() {
 
       {/* Final CTA */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(1.6rem, 5vw, 2.5rem)', marginBottom: '1rem' }}>{t('final_title')}</h2>
-        <p style={{ color: 'var(--ink-muted)', marginBottom: '2rem', fontSize: '1.1rem' }}>{t('final_sub')}</p>
-        <Link href="/auth/signup" className="btn btn-primary" style={{ fontSize: '1.05rem', padding: '0.85rem 2.5rem' }}>
-          {t('final_cta')} <ArrowRight size={16} />
-        </Link>
+        <div style={{ background: 'var(--brand)', borderRadius: 'var(--radius-xl)', padding: 'clamp(2rem, 6vw, 4rem) 2rem', color: 'white' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.6rem, 5vw, 2.5rem)', marginBottom: '1rem', color: 'white' }}>{t('final_title')}</h2>
+          <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '2rem', fontSize: '1.05rem', maxWidth: 520, margin: '0 auto 2rem' }}>{t('final_sub')}</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/auth/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'white', color: 'var(--brand)', fontWeight: 700, fontSize: '1rem', padding: '0.85rem 2.25rem', borderRadius: 'var(--radius)', textDecoration: 'none' }}>
+              {t('final_cta')} <ArrowRight size={16} />
+            </Link>
+            <Link href="#pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'white', fontWeight: 600, fontSize: '0.95rem', padding: '0.85rem 1.75rem', borderRadius: 'var(--radius)', textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.4)' }}>
+              View pricing
+            </Link>
+          </div>
+          <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: '1.25rem' }}>Free forever · No credit card · Cancel anytime</p>
+        </div>
       </section>
 
       {/* Footer */}
