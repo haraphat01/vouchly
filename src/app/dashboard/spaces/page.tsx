@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import { Plus, ExternalLink, Copy, MoreHorizontal, Trash2, Edit } from 'lucide-react'
+import { toast } from 'sonner'
 import { calculateProofScore, type ScoredTestimonial } from '@/lib/proofScore'
 
 export default function SpacesPage() {
@@ -46,10 +47,19 @@ export default function SpacesPage() {
     load()
   }, [])
 
-  async function deleteSpace(id: string) {
-    if (!confirm('Delete this space and all its testimonials? This cannot be undone.')) return
-    await supabase.from('spaces').delete().eq('id', id)
+  async function deleteSpace(id: string, name: string) {
+    const previous = spaces
     setSpaces(prev => prev.filter(s => s.id !== id))
+    toast(`"${name}" deleted`, {
+      description: 'Space and all its testimonials have been removed.',
+      action: {
+        label: 'Undo',
+        onClick: () => setSpaces(previous),
+      },
+      duration: 5000,
+      onDismiss: async () => { await supabase.from('spaces').delete().eq('id', id) },
+      onAutoClose: async () => { await supabase.from('spaces').delete().eq('id', id) },
+    })
   }
 
   function copyLink(slug: string) {
@@ -113,7 +123,7 @@ export default function SpacesPage() {
                   <Link href={`/dashboard/spaces/${space.id}`} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
                     <Edit size={13} /> Manage
                   </Link>
-                  <button onClick={() => deleteSpace(space.id)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
+                  <button onClick={() => deleteSpace(space.id, space.name)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
                     <Trash2 size={13} />
                   </button>
                 </div>

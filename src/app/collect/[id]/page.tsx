@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Space } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
 import { Star, Send, Video, FileText, Loader2, CheckCircle2, Quote } from 'lucide-react'
+import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
@@ -113,7 +114,7 @@ export default function CollectPage() {
         videoUrl = url
       } else {
         const { error } = await uploadRes.json()
-        alert(error || 'Video upload failed. Please try again.')
+        toast.error(error || 'Video upload failed. Please try again.')
         setSubmitting(false)
         return
       }
@@ -138,7 +139,7 @@ export default function CollectPage() {
       setStep('done')
     } else {
       const { error } = await res.json()
-      alert(error || 'Failed to submit testimonial. Please try again.')
+      toast.error(error || 'Failed to submit testimonial. Please try again.')
     }
   }
 

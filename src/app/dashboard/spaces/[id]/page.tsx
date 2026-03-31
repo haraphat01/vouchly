@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase'
 import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
-import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import EmbedWizard from '@/components/EmbedWizard'
 import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
@@ -68,7 +69,7 @@ export default function SpaceDetailPage() {
         body: JSON.stringify({ content: t.content, name: t.submitter_name, role: t.submitter_role }),
       })
       const data = await res.json()
-      if (!res.ok) { alert(data.error || 'Failed to polish'); setPolishing(null); return }
+      if (!res.ok) { toast.error(data.error || 'Failed to polish testimonial'); setPolishing(null); return }
       await supabase.from('testimonials').update({ ai_enhanced_content: data.polished }).eq('id', t.id)
       setTestimonials(prev => prev.map(x => x.id === t.id ? { ...x, ai_enhanced_content: data.polished } : x))
     } catch (e) { console.error(e) }
@@ -88,6 +89,20 @@ export default function SpaceDetailPage() {
     setInviteEmail('')
     setInviteName('')
     setTimeout(() => setInviteSent(false), 3000)
+  }
+
+  async function deleteTestimonial(tid: string, name: string) {
+    const previous = testimonials
+    setTestimonials(prev => prev.filter(t => t.id !== tid))
+    toast(`Testimonial from ${name} deleted`, {
+      action: {
+        label: 'Undo',
+        onClick: () => setTestimonials(previous),
+      },
+      duration: 5000,
+      onDismiss: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
+      onAutoClose: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
+    })
   }
 
   async function saveBrandColor() {
@@ -421,6 +436,9 @@ export default function SpaceDetailPage() {
                     Reset to pending
                   </button>
                 )}
+                <button onClick={() => deleteTestimonial(t.id, t.submitter_name)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b', marginLeft: 'auto' }}>
+                  <Trash2 size={12} /> Delete
+                </button>
                 {t.content && !t.ai_enhanced_content && (() => {
                   const canAI = PLANS[(profile?.plan || 'free') as keyof typeof PLANS].ai
                   return canAI ? (
