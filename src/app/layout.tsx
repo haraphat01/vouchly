@@ -3,13 +3,14 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, getLocale } from 'next-intl/server'
 import { Toaster } from 'sonner'
 import './globals.css'
+import { GoogleTagManager } from '@next/third-parties/google'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vouchly.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: 'vouchly — Collect & Display Customer Testimonials',
+    default: 'vouchly — Collect & Display Customer Testimonials on your website',
     template: '%s | vouchly',
   },
   description:
@@ -111,6 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <GoogleTagManager gtmId="GTM-5LM4ZJ7Z" />
       </head>
       <body className="grain">
         <NextIntlClientProvider messages={messages}>
