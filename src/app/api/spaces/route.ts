@@ -1,39 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
+import { requireAuth, requireSpaceOwner } from '@/lib/apiAuth'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('userId')
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-  if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
-
+  // Only return spaces belonging to the authenticated user — ignore userId param
   const { data, error } = await supabaseAdmin
     .from('spaces')
     .select('*')
-    .eq('user_id', userId)
+    .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to load spaces' }, { status: 500 })
   return NextResponse.json({ spaces: data })
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify auth
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
 
     // Check space limit against plan
-    const { data: profile } = await supabaseAdmin.from('profiles').select('plan').eq('id', user.id).single()
+    const { data: profile } = await supabaseAdmin.from('profiles').select('plan').eq('id', auth.user.id).single()
     const plan = (profile?.plan || 'free') as keyof typeof PLANS
     const planConfig = PLANS[plan]
 
     if (planConfig.spaces !== -1) {
-      const { count } = await supabaseAdmin.from('spaces').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+      const { count } = await supabaseAdmin.from('spaces').select('id', { count: 'exact', head: true }).eq('user_id', auth.user.id)
       if ((count || 0) >= planConfig.spaces) {
         return NextResponse.json(
           { error: `Your ${planConfig.name} plan allows ${planConfig.spaces} space${planConfig.spaces !== 1 ? 's' : ''}. Upgrade to create more.` },
@@ -42,23 +38,59 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Whitelist allowed fields — never trust the full body
     const body = await req.json()
-    const { data, error } = await supabaseAdmin.from('spaces').insert({ ...body, user_id: user.id }).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const allowed = {
+      name: body.name,
+      slug: body.slug,
+      description: body.description,
+      theme_color: body.theme_color,
+      collect_text: body.collect_text,
+      collect_video: body.collect_video,
+      questions: body.questions,
+      is_active: body.is_active,
+      rating_required: body.rating_required,
+      auto_approve: body.auto_approve,
+    }
+
+    const { data, error } = await supabaseAdmin.from('spaces').insert({ ...allowed, user_id: auth.user.id }).select().single()
+    if (error) return NextResponse.json({ error: 'Failed to create space' }, { status: 500 })
     return NextResponse.json({ space: data })
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, ...updates } = await req.json()
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const body = await req.json()
+    const { id } = body
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    // Verify the caller owns this space
+    const ownerCheck = await requireSpaceOwner(id, auth.user.id)
+    if (ownerCheck instanceof NextResponse) return ownerCheck
+
+    // Whitelist updatable fields — prevents mass assignment
+    const updates = {
+      ...(body.name !== undefined && { name: body.name }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.theme_color !== undefined && { theme_color: body.theme_color }),
+      ...(body.collect_text !== undefined && { collect_text: body.collect_text }),
+      ...(body.collect_video !== undefined && { collect_video: body.collect_video }),
+      ...(body.questions !== undefined && { questions: body.questions }),
+      ...(body.is_active !== undefined && { is_active: body.is_active }),
+      ...(body.rating_required !== undefined && { rating_required: body.rating_required }),
+      ...(body.auto_approve !== undefined && { auto_approve: body.auto_approve }),
+    }
+
     const { data, error } = await supabaseAdmin.from('spaces').update(updates).eq('id', id).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Failed to update space' }, { status: 500 })
     return NextResponse.json({ space: data })
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

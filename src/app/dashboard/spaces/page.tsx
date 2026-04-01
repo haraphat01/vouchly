@@ -1,70 +1,63 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import type { Space } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
-import { Plus, ExternalLink, Copy, MoreHorizontal, Trash2, Edit } from 'lucide-react'
+import { Plus, ExternalLink, Copy, Trash2, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateProofScore, type ScoredTestimonial } from '@/lib/proofScore'
+import { useSpaces } from '@/hooks/useSpaces'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+async function fetchAllSpaceScores(spaceIds: string[]) {
+  if (spaceIds.length === 0) return {}
+  const { data: te } = await supabase
+    .from('testimonials')
+    .select('space_id, status, rating, type, submitter_role, submitter_company, content, created_at')
+    .in('space_id', spaceIds)
+  if (!te) return {}
+  const bySpace: Record<string, ScoredTestimonial[]> = {}
+  for (const t of te) {
+    bySpace[t.space_id] = bySpace[t.space_id] ?? []
+    bySpace[t.space_id].push(t as ScoredTestimonial)
+  }
+  const scores: Record<string, ReturnType<typeof calculateProofScore>> = {}
+  for (const id of spaceIds) scores[id] = calculateProofScore(bySpace[id] ?? [])
+  return scores
+}
 
 export default function SpacesPage() {
-  const [spaces, setSpaces] = useState<Space[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [copied, setCopied] = useState<string | null>(null)
-  const [spaceScores, setSpaceScores] = useState<Record<string, ReturnType<typeof calculateProofScore>>>({})
 
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const { data } = await supabase.from('spaces').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
-      const fetched = data || []
-      setSpaces(fetched)
-      setLoading(false)
+  const { data: spaces = [], isLoading } = useSpaces()
 
-      // Batch-fetch testimonials for all spaces to compute proof scores
-      if (fetched.length > 0) {
-        const ids = fetched.map((s: Space) => s.id)
-        const { data: te } = await supabase
-          .from('testimonials')
-          .select('space_id, status, rating, type, submitter_role, submitter_company, content, created_at')
-          .in('space_id', ids)
-        if (te) {
-          const bySpace: Record<string, ScoredTestimonial[]> = {}
-          for (const t of te) {
-            bySpace[t.space_id] = bySpace[t.space_id] ?? []
-            bySpace[t.space_id].push(t as ScoredTestimonial)
-          }
-          const scores: Record<string, ReturnType<typeof calculateProofScore>> = {}
-          for (const id of ids) {
-            scores[id] = calculateProofScore(bySpace[id] ?? [])
-          }
-          setSpaceScores(scores)
-        }
-      }
-    }
-    load()
-  }, [])
+  const { data: spaceScores = {} } = useQuery({
+    queryKey: ['space-scores', spaces.map(s => s.id).join(',')],
+    queryFn: () => fetchAllSpaceScores(spaces.map(s => s.id)),
+    enabled: spaces.length > 0,
+  })
 
   async function deleteSpace(id: string, name: string) {
     const previous = spaces
-    setSpaces(prev => prev.filter(s => s.id !== id))
+    queryClient.setQueryData(['spaces'], spaces.filter(s => s.id !== id))
     toast(`"${name}" deleted`, {
       description: 'Space and all its testimonials have been removed.',
-      action: {
-        label: 'Undo',
-        onClick: () => setSpaces(previous),
-      },
+      action: { label: 'Undo', onClick: () => queryClient.setQueryData(['spaces'], previous) },
       duration: 5000,
-      onDismiss: async () => { await supabase.from('spaces').delete().eq('id', id) },
-      onAutoClose: async () => { await supabase.from('spaces').delete().eq('id', id) },
+      onDismiss: async () => {
+        await supabase.from('spaces').delete().eq('id', id)
+        queryClient.invalidateQueries({ queryKey: ['spaces'] })
+      },
+      onAutoClose: async () => {
+        await supabase.from('spaces').delete().eq('id', id)
+        queryClient.invalidateQueries({ queryKey: ['spaces'] })
+      },
     })
   }
 
   function copyLink(slug: string) {
-    const url = `${window.location.origin}/collect/${slug}`
-    navigator.clipboard.writeText(url)
+    navigator.clipboard.writeText(`${window.location.origin}/collect/${slug}`)
     setCopied(slug)
     setTimeout(() => setCopied(null), 2000)
   }
@@ -81,7 +74,7 @@ export default function SpacesPage() {
         </Link>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {[...Array(3)].map((_, i) => <div key={i} className="skeleton" style={{ height: 90 }} />)}
         </div>

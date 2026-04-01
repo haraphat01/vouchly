@@ -3,15 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Profile } from '@/lib/supabase'
 import { Quote, LayoutDashboard, MessageSquareQuote, Settings, LogOut, Plus, Zap, Menu, X } from 'lucide-react'
+import { useProfile } from '@/hooks/useProfile'
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [authed, setAuthed] = useState<boolean | null>(null)
   const mainRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -21,10 +20,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/auth/login'); return }
-      supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => { setProfile(data); setLoading(false) })
+      setAuthed(true)
     })
   }, [router])
+
+  const { data: profile, isLoading } = useProfile()
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -37,7 +37,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
 
-  if (loading) {
+  if (authed === null || isLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper)' }}>
         <div style={{ textAlign: 'center' }}>
@@ -104,12 +104,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--paper)' }}>
-      {/* Desktop sidebar — hidden on mobile, shown on md+ */}
+      {/* Desktop sidebar */}
       <div className="hidden md:flex" style={{ flexShrink: 0 }}>
         <Sidebar />
       </div>
 
-      {/* Mobile header — shown on mobile, hidden on md+ */}
+      {/* Mobile header */}
       <div className="flex md:hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'white', borderBottom: '1px solid #eceae6', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 28, height: 28, background: 'var(--brand)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -122,19 +122,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </button>
       </div>
 
-      {/* Mobile nav drawer overlay */}
+      {/* Mobile nav drawer */}
       {mobileOpen && (
         <div className="md:hidden" style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-          {/* Backdrop */}
           <div onClick={() => setMobileOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
-          {/* Drawer panel */}
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, overflowY: 'auto' }}>
             <Sidebar onNavClick={() => setMobileOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* Main content — scrolls independently, offset on mobile for the fixed header */}
       <main ref={mainRef} className="dashboard-main" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {children}
       </main>

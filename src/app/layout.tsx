@@ -4,6 +4,7 @@ import { getMessages, getLocale } from 'next-intl/server'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { GoogleTagManager } from '@next/third-parties/google'
+import QueryProvider from '@/components/QueryProvider'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vouchly.app'
 
@@ -115,9 +116,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <GoogleTagManager gtmId="GTM-5LM4ZJ7Z" />
       </head>
       <body className="grain">
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <QueryProvider>
+          <NextIntlClientProvider messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </QueryProvider>
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>

@@ -3,24 +3,21 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
-import type { Profile } from '@/lib/supabase'
 import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp, Trash2, QrCode, Share2, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
 import QRCode from 'react-qr-code'
 import EmbedWizard from '@/components/EmbedWizard'
 import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
+import { useSpace, useUpdateSpace } from '@/hooks/useSpaces'
+import { useTestimonials, useUpdateTestimonialStatus, useDeleteTestimonial, usePolishTestimonial } from '@/hooks/useTestimonials'
+import { useProfile } from '@/hooks/useProfile'
 
 export default function SpaceDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const [space, setSpace] = useState<Space | null>(null)
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'all' | 'pending' | 'approved' | 'archived'>('all')
-  const [polishing, setPolishing] = useState<string | null>(null)
   const [copied, setCopied] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
@@ -29,7 +26,6 @@ export default function SpaceDetailPage() {
   const [showEmbed, setShowEmbed] = useState(false)
   const [pageTab, setPageTab] = useState<'testimonials' | 'settings' | 'growth' | 'analytics'>('testimonials')
   const [customSource, setCustomSource] = useState('')
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [brandColor, setBrandColor] = useState('#d4751f')
   const [colorInput, setColorInput] = useState('#d4751f')
   const [savingColor, setSavingColor] = useState(false)
@@ -39,56 +35,28 @@ export default function SpaceDetailPage() {
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
+  const { data: space, isLoading: spaceLoading } = useSpace(id)
+  const { data: testimonials = [], isLoading: testimonialsLoading } = useTestimonials(id)
+  const { data: profile } = useProfile()
+
+  const updateSpace = useUpdateSpace()
+  const updateStatus = useUpdateTestimonialStatus()
+  const deleteTestimonialMutation = useDeleteTestimonial()
+  const polishMutation = usePolishTestimonial()
+
+  // Sync local color/settings state when space loads
   useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      const [{ data: sp }, { data: te }, { data: prof }] = await Promise.all([
-        supabase.from('spaces').select('*').eq('id', id).single(),
-        supabase.from('testimonials').select('*').eq('space_id', id).order('created_at', { ascending: false }),
-        session ? supabase.from('profiles').select('*').eq('id', session.user.id).single() : Promise.resolve({ data: null }),
-      ])
-      setSpace(sp)
-      setTestimonials(te || [])
-      setProfile(prof)
-      if (sp?.theme_color) { setBrandColor(sp.theme_color); setColorInput(sp.theme_color) }
-      if (sp) { setRatingRequired(sp.rating_required ?? false); setAutoApprove(sp.auto_approve ?? false) }
-      setLoading(false)
-    }
-    load()
-  }, [id])
-
-  async function updateStatus(tid: string, status: Testimonial['status']) {
-    await supabase.from('testimonials').update({ status }).eq('id', tid)
-    setTestimonials(prev => prev.map(t => t.id === tid ? { ...t, status } : t))
-  }
-
-  async function polishWithAI(t: Testimonial) {
-    if (!t.content) return
-    setPolishing(t.id)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/testimonials/polish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ content: t.content, name: t.submitter_name, role: t.submitter_role }),
-      })
-      const data = await res.json()
-      if (!res.ok) { toast.error(data.error || 'Failed to polish testimonial'); setPolishing(null); return }
-      await supabase.from('testimonials').update({ ai_enhanced_content: data.polished }).eq('id', t.id)
-      setTestimonials(prev => prev.map(x => x.id === t.id ? { ...x, ai_enhanced_content: data.polished } : x))
-    } catch (e) { console.error(e) }
-    setPolishing(null)
-  }
+    if (space?.theme_color) { setBrandColor(space.theme_color); setColorInput(space.theme_color) }
+    if (space) { setRatingRequired(space.rating_required ?? false); setAutoApprove(space.auto_approve ?? false) }
+  }, [space?.id])
 
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault()
     setSendingInvite(true)
+    const { data: { session } } = await supabase.auth.getSession()
     await fetch('/api/invitations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
       body: JSON.stringify({ spaceId: id, email: inviteEmail, name: inviteName }),
     })
     setInviteSent(true)
@@ -99,23 +67,16 @@ export default function SpaceDetailPage() {
   }
 
   async function deleteTestimonial(tid: string, name: string) {
-    const previous = testimonials
-    setTestimonials(prev => prev.filter(t => t.id !== tid))
-    toast(`Testimonial from ${name} deleted`, {
-      action: {
-        label: 'Undo',
-        onClick: () => setTestimonials(previous),
+    deleteTestimonialMutation.mutate({ id: tid, spaceId: id }, {
+      onSuccess: () => {
+        toast(`Testimonial from ${name} deleted`)
       },
-      duration: 5000,
-      onDismiss: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
-      onAutoClose: async () => { await fetch(`/api/testimonials?id=${tid}`, { method: 'DELETE' }) },
     })
   }
 
   async function saveSettings() {
     setSavingSettings(true)
-    await supabase.from('spaces').update({ rating_required: ratingRequired, auto_approve: autoApprove }).eq('id', id)
-    setSpace(prev => prev ? { ...prev, rating_required: ratingRequired, auto_approve: autoApprove } : prev)
+    await updateSpace.mutateAsync({ id, updates: { rating_required: ratingRequired, auto_approve: autoApprove } })
     setSavingSettings(false)
     setSettingsSaved(true)
     setTimeout(() => setSettingsSaved(false), 2000)
@@ -123,11 +84,18 @@ export default function SpaceDetailPage() {
 
   async function saveBrandColor() {
     setSavingColor(true)
-    await supabase.from('spaces').update({ theme_color: brandColor }).eq('id', id)
-    setSpace(prev => prev ? { ...prev, theme_color: brandColor } : prev)
+    await updateSpace.mutateAsync({ id, updates: { theme_color: brandColor } })
     setSavingColor(false)
     setColorSaved(true)
     setTimeout(() => setColorSaved(false), 2000)
+  }
+
+  async function polishWithAI(t: import('@/lib/supabase').Testimonial) {
+    if (!t.content) return
+    const { data: { session } } = await supabase.auth.getSession()
+    polishMutation.mutate({ testimonial: t, spaceId: id, token: session?.access_token || '' }, {
+      onError: (err) => toast.error(err.message || 'Failed to polish testimonial'),
+    })
   }
 
   function downloadQR() {
@@ -150,11 +118,12 @@ export default function SpaceDetailPage() {
   }
 
   const filtered = testimonials.filter(t => tab === 'all' ? true : t.status === tab)
-  const collectUrl = space ? `${typeof window !== 'undefined' ? window.location.origin : ''}/collect/${space.slug}` : ''
-  const wallUrl = space ? `${typeof window !== 'undefined' ? window.location.origin : ''}/wall/${space.slug}` : ''
-  const embedCode = space ? `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed.js" data-space="${space.slug}" async></script>` : ''
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const collectUrl = space ? `${origin}/collect/${space.slug}` : ''
+  const wallUrl = space ? `${origin}/wall/${space.slug}` : ''
+  const embedCode = space ? `<script src="${origin}/embed.js" data-space="${space.slug}" async></script>` : ''
 
-  if (loading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
+  if (spaceLoading || testimonialsLoading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
   if (!space) return <div className="dash-page">Space not found.</div>
 
   const PAGE_TABS = [
@@ -293,17 +262,17 @@ export default function SpaceDetailPage() {
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', paddingTop: '0.25rem', borderTop: '1px solid #f5ede0' }}>
                     {t.status !== 'approved' && (
-                      <button onClick={() => updateStatus(t.id, 'approved')} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#2e7d4f' }}>
+                      <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'approved' })} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#2e7d4f' }}>
                         <CheckCircle size={12} /> Approve
                       </button>
                     )}
                     {t.status !== 'archived' && (
-                      <button onClick={() => updateStatus(t.id, 'archived')} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b' }}>
+                      <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'archived' })} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b' }}>
                         <Archive size={12} /> Archive
                       </button>
                     )}
                     {t.status !== 'pending' && (
-                      <button onClick={() => updateStatus(t.id, 'pending')} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
+                      <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'pending' })} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
                         Reset to pending
                       </button>
                     )}
@@ -319,9 +288,9 @@ export default function SpaceDetailPage() {
                     {t.content && !t.ai_enhanced_content && (() => {
                       const canAI = PLANS[(profile?.plan || 'free') as keyof typeof PLANS].ai
                       return canAI ? (
-                        <button onClick={() => polishWithAI(t)} disabled={polishing === t.id} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
-                          {polishing === t.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
-                          {polishing === t.id ? 'Polishing…' : 'Polish with AI'}
+                        <button onClick={() => polishWithAI(t)} disabled={polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
+                          {polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
+                          {polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id ? 'Polishing…' : 'Polish with AI'}
                         </button>
                       ) : (
                         <Link href="/dashboard/settings?tab=billing" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>

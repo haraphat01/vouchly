@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'video and spaceId are required' }, { status: 400 })
     }
 
+    // Verify the space exists and is active before accepting uploads
+    const { data: space } = await supabaseAdmin.from('spaces').select('id, is_active').eq('id', spaceId).single()
+    if (!space || !space.is_active) {
+      return NextResponse.json({ error: 'Space not found or inactive' }, { status: 404 })
+    }
+
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: 'Video exceeds the 50 MB size limit.' }, { status: 413 })
     }
@@ -38,9 +44,18 @@ export async function POST(req: NextRequest) {
     const path = `${spaceId}/${Date.now()}.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(BUCKET)
-      .upload(path, buffer, { contentType: file.type, upsert: false })
+    // Retry up to 3 times — EPIPE errors occur when undici reuses a stale
+    // connection from the pool. The second attempt always uses a fresh connection.
+    let data: { path: string } | null = null
+    let error: Error | null = null
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await supabaseAdmin.storage
+        .from(BUCKET)
+        .upload(path, buffer, { contentType: file.type, upsert: false })
+      if (!result.error) { data = result.data; break }
+      error = result.error
+      if (attempt < 3) await new Promise(r => setTimeout(r, 300 * attempt))
+    }
 
     if (error || !data) {
       console.error('Storage upload error:', error)

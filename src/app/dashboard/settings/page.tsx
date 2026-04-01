@@ -1,32 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Profile } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
 import { Loader2, CheckCircle2, User, CreditCard, Zap } from 'lucide-react'
+import { useProfile } from '@/hooks/useProfile'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: profile, isLoading } = useProfile()
+  const queryClient = useQueryClient()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [name, setName] = useState('')
   const [tab, setTab] = useState<'profile' | 'billing'>('profile')
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => { setProfile(data); setName(data?.full_name || ''); setLoading(false) })
-    })
+    if (profile?.full_name) setName(profile.full_name)
+  }, [profile])
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('tab') === 'billing') setTab('billing')
   }, [])
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
+    if (!profile) return
     setSaving(true)
-    await supabase.from('profiles').update({ full_name: name }).eq('id', profile!.id)
+    await supabase.from('profiles').update({ full_name: name }).eq('id', profile.id)
+    queryClient.invalidateQueries({ queryKey: ['profile'] })
     setSaved(true)
     setSaving(false)
     setTimeout(() => setSaved(false), 2000)
@@ -46,7 +48,7 @@ export default function SettingsPage() {
     if (url) window.location.href = url
   }
 
-  if (loading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
+  if (isLoading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
 
   return (
     <div className="dash-page" style={{ maxWidth: 680 }}>

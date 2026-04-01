@@ -1,42 +1,48 @@
 'use client'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import type { Space, Testimonial } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
-import { Plus, Star, TrendingUp, MessageSquare, CheckCircle, Clock, ArrowRight } from 'lucide-react'
+import { Plus, Star, MessageSquare, CheckCircle, Clock, ArrowRight } from 'lucide-react'
+import { useSpaces } from '@/hooks/useSpaces'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import type { Testimonial } from '@/lib/supabase'
+
+function useRecentTestimonials(spaceIds: string[]) {
+  return useQuery<Testimonial[]>({
+    queryKey: ['testimonials', 'recent', spaceIds.join(',')],
+    queryFn: async () => {
+      if (spaceIds.length === 0) return []
+      const { data } = await supabase
+        .from('testimonials')
+        .select('*')
+        .in('space_id', spaceIds)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      return data || []
+    },
+    enabled: spaceIds.length > 0,
+  })
+}
 
 export default function DashboardPage() {
-  const [spaces, setSpaces] = useState<Space[]>([])
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: spaces = [], isLoading: spacesLoading } = useSpaces()
+  const spaceIds = spaces.map(s => s.id)
+  const { data: testimonials = [], isLoading: testimonialsLoading } = useRecentTestimonials(spaceIds)
 
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const [{ data: sp }, { data: te }] = await Promise.all([
-        supabase.from('spaces').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
-        supabase.from('testimonials').select('*').in('space_id',
-          (await supabase.from('spaces').select('id').eq('user_id', session.user.id)).data?.map(s => s.id) || []
-        ).order('created_at', { ascending: false }).limit(50)
-      ])
-      setSpaces(sp || [])
-      setTestimonials(te || [])
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const loading = spacesLoading || (spaceIds.length > 0 && testimonialsLoading)
 
   const pending = testimonials.filter(t => t.status === 'pending').length
   const approved = testimonials.filter(t => t.status === 'approved').length
-  const avgRating = testimonials.filter(t => t.rating).reduce((a, t) => a + (t.rating || 0), 0) / (testimonials.filter(t => t.rating).length || 1)
+  const ratedCount = testimonials.filter(t => t.rating).length
+  const avgRating = ratedCount > 0
+    ? testimonials.filter(t => t.rating).reduce((a, t) => a + (t.rating || 0), 0) / ratedCount
+    : null
 
   const stats = [
     { label: 'Total testimonials', value: testimonials.length, icon: MessageSquare, color: 'var(--brand)' },
     { label: 'Pending review', value: pending, icon: Clock, color: '#e8963a' },
     { label: 'Published', value: approved, icon: CheckCircle, color: '#2e7d4f' },
-    { label: 'Avg. rating', value: testimonials.filter(t => t.rating).length > 0 ? avgRating.toFixed(1) : '–', icon: Star, color: '#7c5cbf' },
+    { label: 'Avg. rating', value: avgRating ? avgRating.toFixed(1) : '–', icon: Star, color: '#7c5cbf' },
   ]
 
   if (loading) {
