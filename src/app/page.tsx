@@ -1,7 +1,50 @@
 import Link from 'next/link'
-import { Star, Zap, ArrowRight, CheckCircle2, Quote } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Star,
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+  Quote,
+  Video,
+  Wand2,
+  Palette,
+  Mail,
+  Link2,
+  Code2,
+  BarChart3,
+  Send,
+  Sparkles,
+  LayoutGrid,
+  MessageSquarePlus,
+  AlignLeft,
+  Monitor,
+} from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+
+const ICON_STROKE = 1.5
+const ICON_SIZE = 20
+
+function IconTile({ Icon }: { Icon: LucideIcon }) {
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        background: 'var(--brand-light)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--brand)',
+      }}
+    >
+      <Icon size={ICON_SIZE} strokeWidth={ICON_STROKE} aria-hidden />
+    </div>
+  )
+}
 
 export default async function Home() {
   const t = await getTranslations('home')
@@ -13,21 +56,27 @@ export default async function Home() {
     { name: t('t3_name'), role: t('t3_role'), text: t('t3_text'), rating: 5 },
   ]
 
-  const features = [
-    { icon: '🎥', title: t('feat1_title'), desc: t('feat1_desc') },
-    { icon: '🤖', title: t('feat2_title'), desc: t('feat2_desc') },
-    { icon: '🎨', title: t('feat3_title'), desc: t('feat3_desc') },
-    { icon: '⭐', title: t('feat4_title'), desc: t('feat4_desc') },
-    { icon: '📧', title: t('feat5_title'), desc: t('feat5_desc') },
-    { icon: '🔗', title: t('feat6_title'), desc: t('feat6_desc') },
-    { icon: '💻', title: t('feat7_title'), desc: t('feat7_desc') },
-    { icon: '📊', title: t('feat8_title'), desc: t('feat8_desc') },
+  const features: { Icon: LucideIcon; title: string; desc: string }[] = [
+    { Icon: Video, title: t('feat1_title'), desc: t('feat1_desc') },
+    { Icon: Wand2, title: t('feat2_title'), desc: t('feat2_desc') },
+    { Icon: Palette, title: t('feat3_title'), desc: t('feat3_desc') },
+    { Icon: Star, title: t('feat4_title'), desc: t('feat4_desc') },
+    { Icon: Mail, title: t('feat5_title'), desc: t('feat5_desc') },
+    { Icon: Link2, title: t('feat6_title'), desc: t('feat6_desc') },
+    { Icon: Code2, title: t('feat7_title'), desc: t('feat7_desc') },
+    { Icon: BarChart3, title: t('feat8_title'), desc: t('feat8_desc') },
   ]
 
-  const steps = [
-    { step: '01', icon: '📬', title: t('step1_title'), desc: t('step1_desc') },
-    { step: '02', icon: '✨', title: t('step2_title'), desc: t('step2_desc') },
-    { step: '03', icon: '🚀', title: t('step3_title'), desc: t('step3_desc') },
+  const steps: { step: string; Icon: LucideIcon; title: string; desc: string }[] = [
+    { step: '01', Icon: Send, title: t('step1_title'), desc: t('step1_desc') },
+    { step: '02', Icon: Sparkles, title: t('step2_title'), desc: t('step2_desc') },
+    { step: '03', Icon: LayoutGrid, title: t('step3_title'), desc: t('step3_desc') },
+  ]
+
+  const problems: { Icon: LucideIcon; problem: string; fix: string }[] = [
+    { Icon: MessageSquarePlus, problem: 'Asking for testimonials feels awkward', fix: 'A beautiful branded form does the asking for you' },
+    { Icon: AlignLeft, problem: 'The ones you get are too vague to convert', fix: 'AI rewrites them into compelling, specific stories' },
+    { Icon: Monitor, problem: 'Nowhere to display them that looks good', fix: 'One script tag creates a stunning wall on your site' },
   ]
 
   const plans = [
@@ -118,13 +167,11 @@ export default async function Home() {
           92% of buyers read reviews before they buy. If your site has no testimonials — or weak ones like "great service, 5 stars" — you're invisible to the customers who need convincing most.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          {[
-            { icon: '😬', problem: 'Asking for testimonials feels awkward', fix: 'A beautiful branded form does the asking for you' },
-            { icon: '😞', problem: 'The ones you get are too vague to convert', fix: 'AI rewrites them into compelling, specific stories' },
-            { icon: '😩', problem: 'Nowhere to display them that looks good', fix: 'One script tag creates a stunning wall on your site' },
-          ].map(({ icon, problem, fix }) => (
+          {problems.map(({ Icon, problem, fix }) => (
             <div key={problem} style={{ background: 'white', border: '1px solid #eceae6', borderRadius: 'var(--radius-lg)', padding: '1.25rem', textAlign: 'left' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{icon}</div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <IconTile Icon={Icon} />
+              </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '0.6rem', lineHeight: 1.5 }}>{problem}</p>
               <p style={{ fontSize: '0.85rem', color: 'var(--brand)', fontWeight: 600, lineHeight: 1.5 }}>→ {fix}</p>
             </div>
@@ -136,10 +183,12 @@ export default async function Home() {
       <section id="how-it-works" style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem' }}>
         <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: 'clamp(1.5rem, 4vw, 3rem)' }}>{t('steps_title')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'clamp(1rem, 3vw, 2rem)' }}>
-          {steps.map(({ step, icon, title, desc }) => (
+          {steps.map(({ step, Icon, title, desc }) => (
             <div key={step} className="card" style={{ position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: '1rem', right: '1.5rem', fontFamily: 'var(--font-display)', fontSize: '3.5rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1 }}>{step}</div>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{icon}</div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <IconTile Icon={Icon} />
+              </div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{title}</h3>
               <p style={{ color: 'var(--ink-muted)', lineHeight: 1.6, fontSize: '0.95rem' }}>{desc}</p>
             </div>
@@ -152,9 +201,9 @@ export default async function Home() {
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.25rem' }}>
           <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: 'clamp(1.5rem, 4vw, 3rem)' }}>{t('features_title')}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-            {features.map(({ icon, title, desc }) => (
+            {features.map(({ Icon, title, desc }) => (
               <div key={title} style={{ display: 'flex', gap: '1rem', padding: '1.25rem', border: '1px solid #eceae6', borderRadius: 'var(--radius-lg)' }}>
-                <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{icon}</span>
+                <IconTile Icon={Icon} />
                 <div>
                   <h4 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>{title}</h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', lineHeight: 1.5 }}>{desc}</p>
