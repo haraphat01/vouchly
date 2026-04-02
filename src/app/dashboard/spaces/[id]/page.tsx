@@ -4,12 +4,42 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
-import { ArrowLeft, Copy, ExternalLink, Star, CheckCircle, XCircle, Archive, Sparkles, Send, Loader2, Code2, Mail, TrendingUp, Trash2, QrCode, Share2, Link2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Star,
+  CheckCircle,
+  XCircle,
+  Archive,
+  Sparkles,
+  Send,
+  Loader2,
+  Code2,
+  Mail,
+  Gauge,
+  Lightbulb,
+  Trash2,
+  QrCode,
+  Share2,
+  Link2,
+  Instagram,
+  Music2,
+  MessageCircle,
+  Linkedin,
+  Facebook,
+  Twitter,
+  Printer,
+  Mic,
+  Youtube,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import QRCode from 'react-qr-code'
 import EmbedWizard from '@/components/EmbedWizard'
 import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
+import { ProofDimensionIcon, ProofGradeIcon, ProofTipIcon } from '@/components/ProofScoreIcons'
 import { useSpace, useUpdateSpace } from '@/hooks/useSpaces'
 import { useTestimonials, useUpdateTestimonialStatus, useDeleteTestimonial, usePolishTestimonial } from '@/hooks/useTestimonials'
 import { useProfile } from '@/hooks/useProfile'
@@ -431,23 +461,37 @@ export default function SpaceDetailPage() {
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>Share trackable links to see which channel drives the most testimonials.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-              {[
-                { label: 'Instagram', icon: '📸', ref: 'instagram' },
-                { label: 'TikTok', icon: '🎵', ref: 'tiktok' },
-                { label: 'Email', icon: '📧', ref: 'email' },
-                { label: 'WhatsApp', icon: '💬', ref: 'whatsapp' },
-                { label: 'LinkedIn', icon: '💼', ref: 'linkedin' },
-                { label: 'Facebook', icon: '👥', ref: 'facebook' },
-                { label: 'Twitter / X', icon: '🐦', ref: 'twitter' },
-                { label: 'Flyer / Print', icon: '🖨️', ref: 'print' },
-                { label: 'Podcast', icon: '🎙️', ref: 'podcast' },
-                { label: 'YouTube', icon: '▶️', ref: 'youtube' },
-              ].map(({ label, icon, ref }) => {
+              {([
+                { label: 'Instagram', ref: 'instagram', Icon: Instagram },
+                { label: 'TikTok', ref: 'tiktok', Icon: Music2 },
+                { label: 'Email', ref: 'email', Icon: Mail },
+                { label: 'WhatsApp', ref: 'whatsapp', Icon: MessageCircle },
+                { label: 'LinkedIn', ref: 'linkedin', Icon: Linkedin },
+                { label: 'Facebook', ref: 'facebook', Icon: Facebook },
+                { label: 'Twitter / X', ref: 'twitter', Icon: Twitter },
+                { label: 'Flyer / Print', ref: 'print', Icon: Printer },
+                { label: 'Podcast', ref: 'podcast', Icon: Mic },
+                { label: 'YouTube', ref: 'youtube', Icon: Youtube },
+              ] satisfies { label: string; ref: string; Icon: LucideIcon }[]).map(({ label, Icon, ref }) => {
                 const url = `${collectUrl}?ref=${ref}`
                 const key = `campaign-${ref}`
                 return (
                   <div key={ref} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'var(--paper)', border: '1px solid #eceae6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
-                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>{icon}</span>
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: 'var(--brand-light)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        color: 'var(--brand)',
+                      }}
+                    >
+                      <Icon size={16} strokeWidth={1.5} aria-hidden />
+                    </div>
                     <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', width: 90, flexShrink: 0 }}>{label}</span>
                     <span style={{ flex: 1, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
                     <button onClick={() => copyText(url, key)} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', flexShrink: 0, fontSize: '0.75rem' }}>
@@ -504,10 +548,24 @@ export default function SpaceDetailPage() {
                 { label: 'Pending', value: testimonials.filter(t => t.status === 'pending').length },
                 { label: 'With rating', value: testimonials.filter(t => t.rating).length },
                 { label: 'With video', value: testimonials.filter(t => t.video_url).length },
-                { label: 'Avg rating', value: testimonials.filter(t => t.rating).length ? (testimonials.reduce((a, t) => a + (t.rating || 0), 0) / testimonials.filter(t => t.rating).length).toFixed(1) + ' ★' : '—' },
+                {
+                  label: 'Avg rating',
+                  value: testimonials.filter(t => t.rating).length
+                    ? (testimonials.reduce((a, t) => a + (t.rating || 0), 0) / testimonials.filter(t => t.rating).length).toFixed(1)
+                    : null,
+                },
               ].map(({ label, value }) => (
                 <div key={label} className="card" style={{ background: 'white', textAlign: 'center', padding: '1rem' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)', fontFamily: 'Georgia, serif' }}>{value}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)', fontFamily: 'Georgia, serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    {value === null ? '—' : (
+                      <>
+                        {value}
+                        {label === 'Avg rating' && (
+                          <Star size={15} strokeWidth={1.5} color="#e8963a" fill="#e8963a" style={{ flexShrink: 0 }} aria-hidden />
+                        )}
+                      </>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: '0.2rem' }}>{label}</div>
                 </div>
               ))}
@@ -516,10 +574,13 @@ export default function SpaceDetailPage() {
             {/* Proof Score */}
             <div className="card" style={{ background: 'white' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem' }}>
-                <TrendingUp size={16} color="var(--brand)" />
+                <Gauge size={16} strokeWidth={1.5} color="var(--brand)" aria-hidden />
                 <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>Proof Score™</span>
                 <span style={{ fontSize: '0.72rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.15rem 0.5rem', borderRadius: 100, fontWeight: 700, letterSpacing: '0.03em' }}>BETA</span>
-                <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.9rem', color: ps.color }}>{ps.gradeEmoji} {ps.grade}</span>
+                <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.9rem', color: ps.color }}>
+                  <ProofGradeIcon name={ps.gradeIcon} size={16} color={ps.color} />
+                  {ps.grade}
+                </span>
               </div>
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div style={{ flexShrink: 0, textAlign: 'center' }}>
@@ -529,7 +590,10 @@ export default function SpaceDetailPage() {
                 <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {ps.dimensions.map(dim => (
                     <div key={dim.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8rem', width: 68, color: 'var(--ink-muted)', flexShrink: 0 }}>{dim.icon} {dim.label}</span>
+                      <span style={{ fontSize: '0.8rem', minWidth: 92, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', flexShrink: 0 }}>
+                        <ProofDimensionIcon name={dim.icon} size={14} />
+                        {dim.label}
+                      </span>
                       <div style={{ flex: 1, height: 6, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 3, background: ps.color, width: `${(dim.score / dim.max) * 100}%`, transition: 'width 0.6s ease' }} />
                       </div>
@@ -540,11 +604,16 @@ export default function SpaceDetailPage() {
               </div>
               {ps.tips.length > 0 && (
                 <div style={{ marginTop: '1.25rem', borderTop: '1px solid #f0ece6', paddingTop: '1rem' }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>💡 Tips to improve</div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Lightbulb size={14} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0, color: 'var(--ink-muted)' }} />
+                    Tips to improve
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                     {ps.tips.map((tip, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.85rem', color: 'var(--ink)', background: 'var(--paper)', padding: '0.5rem 0.75rem', borderRadius: 8 }}>
-                        <span style={{ flexShrink: 0 }}>{tip.icon}</span>
+                        <span style={{ flexShrink: 0, paddingTop: 2 }}>
+                          <ProofTipIcon name={tip.icon} size={15} />
+                        </span>
                         <span>{tip.text}</span>
                         <span style={{ marginLeft: 'auto', flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: ps.color, background: ps.color + '18', padding: '0.15rem 0.5rem', borderRadius: 100 }}>+{tip.impact} pts</span>
                       </div>

@@ -9,6 +9,7 @@ import { Star, Quote, ExternalLink } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { calculateProofScore } from '@/lib/proofScore'
+import { ProofGradeIcon } from '@/components/ProofScoreIcons'
 
 export default function WallPage() {
   const { id: slug } = useParams<{ id: string }>()
@@ -81,7 +82,9 @@ export default function WallPage() {
               if (ps.total < 10) return null
               return (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'white', border: `1px solid ${ps.color}40`, borderRadius: 100, padding: '0.45rem 1.1rem' }}>
-                  <span style={{ fontSize: '0.9rem' }}>{ps.gradeEmoji}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <ProofGradeIcon name={ps.gradeIcon} size={16} color={ps.color} />
+                  </span>
                   <span style={{ fontWeight: 700, fontSize: '0.85rem', color: ps.color }}>Proof Score™</span>
                   <span style={{ fontWeight: 800, fontSize: '1rem', color: ps.color, fontFamily: 'Georgia, serif' }}>{ps.total}</span>
                   <span style={{ fontSize: '0.72rem', color: 'var(--ink-subtle)', fontWeight: 500 }}>/ 100</span>

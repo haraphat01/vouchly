@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils'
 import { Plus, ExternalLink, Copy, Trash2, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateProofScore, type ScoredTestimonial } from '@/lib/proofScore'
+import { ProofGradeIcon } from '@/components/ProofScoreIcons'
 import { useSpaces } from '@/hooks/useSpaces'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -98,7 +99,8 @@ export default function SpacesPage() {
                     const ps = spaceScores[space.id]
                     return (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: ps.color, background: ps.color + '18', padding: '0.15rem 0.55rem', borderRadius: 100 }}>
-                        {ps.gradeEmoji} {ps.total}
+                        <ProofGradeIcon name={ps.gradeIcon} size={12} color={ps.color} />
+                        {ps.total}
                       </span>
                     )
                   })()}
