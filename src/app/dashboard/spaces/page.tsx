@@ -42,18 +42,22 @@ export default function SpacesPage() {
   async function deleteSpace(id: string, name: string) {
     const previous = spaces
     queryClient.setQueryData(['spaces'], spaces.filter(s => s.id !== id))
+
+    async function commitDelete() {
+      const { data: { session } } = await supabase.auth.getSession()
+      await fetch(`/api/spaces?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      })
+      queryClient.invalidateQueries({ queryKey: ['spaces'] })
+    }
+
     toast(`"${name}" deleted`, {
       description: 'Space and all its testimonials have been removed.',
       action: { label: 'Undo', onClick: () => queryClient.setQueryData(['spaces'], previous) },
       duration: 5000,
-      onDismiss: async () => {
-        await supabase.from('spaces').delete().eq('id', id)
-        queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      },
-      onAutoClose: async () => {
-        await supabase.from('spaces').delete().eq('id', id)
-        queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      },
+      onDismiss: commitDelete,
+      onAutoClose: commitDelete,
     })
   }
 

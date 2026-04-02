@@ -52,8 +52,8 @@ export function useUpdateTestimonialStatus() {
 export function useDeleteTestimonial() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id }: { id: string; spaceId: string }) =>
-      fetch(`/api/testimonials?id=${id}`, { method: 'DELETE' }),
+    mutationFn: ({ id, token }: { id: string; spaceId: string; token: string }) =>
+      fetch(`/api/testimonials?id=${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }),
     onMutate: async ({ id, spaceId }) => {
       await queryClient.cancelQueries({ queryKey: ['testimonials', spaceId] })
       const previous = queryClient.getQueryData<Testimonial[]>(['testimonials', spaceId])
@@ -73,6 +73,33 @@ export function useDeleteTestimonial() {
   })
 }
 
+export function useEditTestimonial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, spaceId, content, aiContent, token }: { id: string; spaceId: string; content?: string; aiContent?: string; token: string }) => {
+      const body: Record<string, string> = { id }
+      if (content !== undefined) body.content = content
+      if (aiContent !== undefined) body.ai_enhanced_content = aiContent
+      const res = await fetch('/api/testimonials', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save') }
+      return { id, content, aiContent }
+    },
+    onSuccess: ({ id, content, aiContent }, { spaceId }) => {
+      queryClient.setQueryData<Testimonial[]>(['testimonials', spaceId], old =>
+        old ? old.map(t => t.id === id ? {
+          ...t,
+          ...(content !== undefined && { content }),
+          ...(aiContent !== undefined && { ai_enhanced_content: aiContent }),
+        } : t) : []
+      )
+    },
+  })
+}
+
 export function usePolishTestimonial() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -80,7 +107,7 @@ export function usePolishTestimonial() {
       const res = await fetch('/api/testimonials/polish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content: testimonial.content, name: testimonial.submitter_name, role: testimonial.submitter_role }),
+        body: JSON.stringify({ content: testimonial.content, name: testimonial.submitter_name, role: testimonial.submitter_role, spaceId }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to polish')

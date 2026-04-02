@@ -25,7 +25,7 @@ export default function NewSpacePage() {
     collect_video: false,
     rating_required: false,
     auto_approve: false,
-    questions: ['What is your name?', 'What do you love most about our product?'],
+    questions: ['What problem were you trying to solve before using us?', 'What specific result or outcome have you seen?'],
   })
   const [newQuestion, setNewQuestion] = useState('')
 
@@ -218,7 +218,10 @@ export default function NewSpacePage() {
 
         {/* Questions */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>Questions to ask submitters</h2>
+          <div>
+            <h2 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Questions to ask submitters</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', margin: 0 }}>These appear on your collection form to guide better responses. They are <strong>not</strong> shown on the testimonial wall — only the written testimonial is displayed. Name is already collected separately, so don't add it here.</p>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {form.questions.map((q, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--paper)', border: '1px solid #eceae6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>

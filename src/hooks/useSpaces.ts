@@ -48,7 +48,12 @@ export function useDeleteSpace() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from('spaces').delete().eq('id', id)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/spaces?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to delete space') }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spaces'] })

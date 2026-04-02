@@ -44,10 +44,12 @@ export async function POST(req: NextRequest) {
       name: body.name,
       slug: body.slug,
       description: body.description,
+      header_title: body.header_title,
+      header_message: body.header_message,
       theme_color: body.theme_color,
       collect_text: body.collect_text,
       collect_video: body.collect_video,
-      questions: body.questions,
+      questions: body.questions ?? [],
       is_active: body.is_active,
       rating_required: body.rating_required,
       auto_approve: body.auto_approve,
@@ -56,6 +58,40 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabaseAdmin.from('spaces').insert({ ...allowed, user_id: auth.user.id }).select().single()
     if (error) return NextResponse.json({ error: 'Failed to create space' }, { status: 500 })
     return NextResponse.json({ space: data })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await requireAuth(req)
+    if (auth instanceof NextResponse) return auth
+
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    const ownerCheck = await requireSpaceOwner(id, auth.user.id)
+    if (ownerCheck instanceof NextResponse) return ownerCheck
+
+    // Delete all storage files for this space from both buckets
+    for (const bucket of ['images', 'videos'] as const) {
+      const { data: files } = await supabaseAdmin.storage.from(bucket).list(id)
+      if (files && files.length > 0) {
+        const paths = files.map(f => `${id}/${f.name}`)
+        await supabaseAdmin.storage.from(bucket).remove(paths)
+      }
+    }
+
+    // Delete all testimonials for this space
+    await supabaseAdmin.from('testimonials').delete().eq('space_id', id)
+
+    // Delete the space itself
+    const { error } = await supabaseAdmin.from('spaces').delete().eq('id', id)
+    if (error) return NextResponse.json({ error: 'Failed to delete space' }, { status: 500 })
+
+    return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -78,6 +114,8 @@ export async function PATCH(req: NextRequest) {
     const updates = {
       ...(body.name !== undefined && { name: body.name }),
       ...(body.description !== undefined && { description: body.description }),
+      ...(body.header_title !== undefined && { header_title: body.header_title }),
+      ...(body.header_message !== undefined && { header_message: body.header_message }),
       ...(body.theme_color !== undefined && { theme_color: body.theme_color }),
       ...(body.collect_text !== undefined && { collect_text: body.collect_text }),
       ...(body.collect_video !== undefined && { collect_video: body.collect_video }),

@@ -96,9 +96,10 @@ export async function PATCH(req: NextRequest) {
     const ownerCheck = await requireTestimonialOwner(id, auth.user.id)
     if (ownerCheck instanceof NextResponse) return ownerCheck
 
-    // Whitelist — only allow status changes from this endpoint
+    // Whitelist — only allow these fields from this endpoint
     const updates = {
       ...(body.status !== undefined && { status: body.status }),
+      ...(body.content !== undefined && { content: body.content }),
       ...(body.ai_enhanced_content !== undefined && { ai_enhanced_content: body.ai_enhanced_content }),
     }
 

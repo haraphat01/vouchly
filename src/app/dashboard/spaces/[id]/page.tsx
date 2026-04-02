@@ -21,6 +21,7 @@ import {
   Gauge,
   Lightbulb,
   Trash2,
+  Pencil,
   QrCode,
   Share2,
   Link2,
@@ -41,7 +42,7 @@ import { calculateProofScore } from '@/lib/proofScore'
 import ProofScoreRing from '@/components/ProofScoreRing'
 import { ProofDimensionIcon, ProofGradeIcon, ProofTipIcon } from '@/components/ProofScoreIcons'
 import { useSpace, useUpdateSpace } from '@/hooks/useSpaces'
-import { useTestimonials, useUpdateTestimonialStatus, useDeleteTestimonial, usePolishTestimonial } from '@/hooks/useTestimonials'
+import { useTestimonials, useUpdateTestimonialStatus, useDeleteTestimonial, usePolishTestimonial, useEditTestimonial } from '@/hooks/useTestimonials'
 import { useProfile } from '@/hooks/useProfile'
 
 export default function SpaceDetailPage() {
@@ -64,6 +65,9 @@ export default function SpaceDetailPage() {
   const [autoApprove, setAutoApprove] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editAiContent, setEditAiContent] = useState('')
 
   const { data: space, isLoading: spaceLoading } = useSpace(id)
   const { data: testimonials = [], isLoading: testimonialsLoading } = useTestimonials(id)
@@ -73,6 +77,7 @@ export default function SpaceDetailPage() {
   const updateStatus = useUpdateTestimonialStatus()
   const deleteTestimonialMutation = useDeleteTestimonial()
   const polishMutation = usePolishTestimonial()
+  const editMutation = useEditTestimonial()
 
   // Sync local color/settings state when space loads
   useEffect(() => {
@@ -97,7 +102,9 @@ export default function SpaceDetailPage() {
   }
 
   async function deleteTestimonial(tid: string, name: string) {
-    deleteTestimonialMutation.mutate({ id: tid, spaceId: id }, {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    deleteTestimonialMutation.mutate({ id: tid, spaceId: id, token: session.access_token }, {
       onSuccess: () => {
         toast(`Testimonial from ${name} deleted`)
       },
@@ -125,6 +132,25 @@ export default function SpaceDetailPage() {
     const { data: { session } } = await supabase.auth.getSession()
     polishMutation.mutate({ testimonial: t, spaceId: id, token: session?.access_token || '' }, {
       onError: (err) => toast.error(err.message || 'Failed to polish testimonial'),
+    })
+  }
+
+  function startEditing(t: import('@/lib/supabase').Testimonial) {
+    setEditingId(t.id)
+    setEditContent(t.content || '')
+    setEditAiContent(t.ai_enhanced_content || '')
+  }
+
+  async function saveEdit(t: import('@/lib/supabase').Testimonial) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    editMutation.mutate({
+      id: t.id, spaceId: id, token: session.access_token,
+      ...(editContent !== t.content && { content: editContent }),
+      ...(editAiContent !== t.ai_enhanced_content && { aiContent: editAiContent }),
+    }, {
+      onSuccess: () => { setEditingId(null); toast('Testimonial saved') },
+      onError: (err) => toast.error(err.message || 'Failed to save'),
     })
   }
 
@@ -267,11 +293,29 @@ export default function SpaceDetailPage() {
                       {t.image_url && <img src={t.image_url} alt="Attached" style={{ maxWidth: '100%', maxHeight: 260, borderRadius: 8, objectFit: 'cover', display: 'block' }} />}
                       {t.content && (
                         <>
-                          <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.content}</p>
-                          {t.ai_enhanced_content && (
+                          {editingId === t.id ? (
+                            <textarea
+                              value={editContent}
+                              onChange={e => setEditContent(e.target.value)}
+                              rows={4}
+                              style={{ width: '100%', fontSize: '0.9rem', lineHeight: 1.65, padding: '0.6rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--brand)', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                            />
+                          ) : (
+                            <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.content}</p>
+                          )}
+                          {(t.ai_enhanced_content || (editingId === t.id && editAiContent)) && (
                             <div style={{ background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
                               <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> AI-polished version</div>
-                              <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.ai_enhanced_content}</p>
+                              {editingId === t.id ? (
+                                <textarea
+                                  value={editAiContent}
+                                  onChange={e => setEditAiContent(e.target.value)}
+                                  rows={4}
+                                  style={{ width: '100%', fontSize: '0.9rem', lineHeight: 1.65, padding: '0.6rem 0.75rem', borderRadius: 8, border: '1.5px solid var(--brand)', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: 'white', boxSizing: 'border-box' }}
+                                />
+                              ) : (
+                                <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>{t.ai_enhanced_content}</p>
+                              )}
                             </div>
                           )}
                         </>
@@ -311,6 +355,21 @@ export default function SpaceDetailPage() {
                         className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
                         <Share2 size={12} /> {copied === `share-${t.id}` ? '✓ Link copied!' : 'Share'}
                       </button>
+                    )}
+                    {t.type === 'text' && editingId !== t.id && (
+                      <button onClick={() => startEditing(t)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
+                        <Pencil size={12} /> Edit
+                      </button>
+                    )}
+                    {editingId === t.id && (
+                      <>
+                        <button onClick={() => saveEdit(t)} disabled={editMutation.isPending} className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
+                          {editMutation.isPending ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null} Save
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
+                          Cancel
+                        </button>
+                      </>
                     )}
                     <button onClick={() => deleteTestimonial(t.id, t.submitter_name)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b', marginLeft: 'auto' }}>
                       <Trash2 size={12} /> Delete
