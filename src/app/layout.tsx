@@ -113,7 +113,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <GoogleTagManager gtmId="GTM-5LM4ZJ7Z" />
+        <GoogleTagManager gtmId="G-NNVY3LGBT4" />
       </head>
       <body className="grain">
         <QueryProvider>
