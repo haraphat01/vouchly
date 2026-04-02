@@ -56,7 +56,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { data, error } = await supabaseAdmin.from('spaces').insert({ ...allowed, user_id: auth.user.id }).select().single()
-    if (error) return NextResponse.json({ error: 'Failed to create space' }, { status: 500 })
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json({ error: `The URL "${allowed.slug}" is already taken. Try a different name or add a word to make it unique.` }, { status: 409 })
+      }
+      return NextResponse.json({ error: 'Failed to create space' }, { status: 500 })
+    }
     return NextResponse.json({ space: data })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

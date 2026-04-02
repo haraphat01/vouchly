@@ -103,7 +103,7 @@ export function useEditTestimonial() {
 export function usePolishTestimonial() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ testimonial, token }: { testimonial: Testimonial; spaceId: string; token: string }) => {
+    mutationFn: async ({ testimonial, spaceId, token }: { testimonial: Testimonial; spaceId: string; token: string }) => {
       const res = await fetch('/api/testimonials/polish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

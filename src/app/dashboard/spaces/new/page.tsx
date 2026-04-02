@@ -6,11 +6,11 @@ import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
 import { generateSlug, PLANS } from '@/lib/utils'
 import { ArrowLeft, Loader2, Plus, X, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function NewSpacePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [spaceCount, setSpaceCount] = useState(0)
   const [planLoading, setPlanLoading] = useState(true)
@@ -61,7 +61,6 @@ export default function NewSpacePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setError('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/auth/login'); return }
     const res = await fetch('/api/spaces', {
@@ -86,7 +85,7 @@ export default function NewSpacePage() {
     })
     const data = await res.json()
     if (!res.ok) {
-      setError(data.error || 'Failed to create space')
+      toast.error(data.error || 'Failed to create space')
       setLoading(false)
     } else {
       router.push('/dashboard/spaces')
@@ -253,8 +252,6 @@ export default function NewSpacePage() {
             </div>
           </div>
         </div>
-
-        {error && <p style={{ color: '#c0392b', fontSize: '0.85rem', background: '#ffe4e4', padding: '0.7rem 1rem', borderRadius: 8 }}>{error}</p>}
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link href="/dashboard/spaces" className="btn btn-secondary">Cancel</Link>
