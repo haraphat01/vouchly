@@ -1,4 +1,4 @@
-# ProofPulse — Testimonial Collector SaaS
+# Vouchly — Testimonial Collector SaaS
 
 A full-featured SaaS for collecting, polishing, and displaying customer testimonials. Built with Next.js 14, Supabase, Resend, OpenAI, and Stripe.
 
@@ -207,4 +207,4 @@ supabase-schema.sql      # Full database schema + RLS policies
 
 ---
 
-Built with ❤️ to help you grow.
+Built by Pencil Digitals ❤️ for small businesses.
