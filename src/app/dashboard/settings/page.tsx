@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [name, setName] = useState('')
   const [tab, setTab] = useState<'profile' | 'billing'>('profile')
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly')
 
   useEffect(() => {
     if (profile?.full_name) setName(profile.full_name)
@@ -42,7 +43,7 @@ export default function SettingsPage() {
         'Content-Type': 'application/json',
         ...(authSession?.access_token ? { 'Authorization': `Bearer ${authSession.access_token}` } : {}),
       },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, interval: billingInterval }),
     })
     const { url } = await res.json()
     if (url) window.location.href = url
@@ -119,18 +120,39 @@ export default function SettingsPage() {
           {/* Upgrade plans */}
           {profile?.plan !== 'pro' && (
             <div>
-              <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Upgrade your plan</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <h2 style={{ fontSize: '1rem', margin: 0 }}>Upgrade your plan</h2>
+                {/* Billing interval toggle */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', background: '#f5ede0', borderRadius: 100, padding: '0.2rem', gap: '0.15rem' }}>
+                  {(['monthly', 'annual'] as const).map(iv => (
+                    <button key={iv} onClick={() => setBillingInterval(iv)}
+                      style={{ padding: '0.3rem 0.85rem', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, transition: 'all 0.15s', background: billingInterval === iv ? 'white' : 'transparent', color: billingInterval === iv ? 'var(--ink)' : 'var(--ink-muted)', boxShadow: billingInterval === iv ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
+                      {iv === 'monthly' ? 'Monthly' : 'Annual'}
+                      {iv === 'annual' && <span style={{ marginLeft: 5, background: '#2e7d4f', color: 'white', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 100 }}>−10%</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {(profile?.plan === 'free' ? ['starter', 'pro'] : ['pro']).map(planKey => {
                   const plan = PLANS[planKey as keyof typeof PLANS]
+                  const isAnnual = billingInterval === 'annual'
+                  const displayPrice = isAnnual ? plan.annualMonthly : plan.price
                   return (
                     <div key={planKey} className="card" style={{ border: planKey === 'pro' ? '2px solid var(--brand)' : '1px solid #eceae6', position: 'relative' }}>
                       {planKey === 'pro' && <div style={{ position: 'absolute', top: -12, right: 20, background: 'var(--brand)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.75rem', borderRadius: 100 }}>Most popular</div>}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                         <div>
                           <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{plan.name}</h3>
-                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700 }}>${plan.price}</span>
-                          <span style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>/month</span>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700 }}>${displayPrice}</span>
+                            <span style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>/month</span>
+                          </div>
+                          {isAnnual && (
+                            <div style={{ fontSize: '0.75rem', color: '#2e7d4f', fontWeight: 600 }}>
+                              ${plan.annualPrice}/year · Save ${Math.round((plan.price * 12 - plan.annualPrice) * 100) / 100}
+                            </div>
+                          )}
                         </div>
                         <button onClick={() => handleUpgrade(planKey as 'starter' | 'pro')} className={`btn ${planKey === 'pro' ? 'btn-primary' : 'btn-secondary'}`} style={{ fontSize: '0.875rem' }}>
                           Upgrade to {plan.name}

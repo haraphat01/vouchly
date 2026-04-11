@@ -9,13 +9,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 const PRICE_IDS: Record<string, string> = {
   starter: process.env.STRIPE_STARTER_PRICE_ID || 'price_starter_placeholder',
   pro: process.env.STRIPE_PRO_PRICE_ID || 'price_pro_placeholder',
+  'starter-annual': process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_starter_annual_placeholder',
+  'pro-annual': process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_pro_annual_placeholder',
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan } = await req.json()
+    const { plan, interval = 'monthly' } = await req.json()
+    const priceKey = interval === 'annual' ? `${plan}-annual` : plan
 
-    if (!PRICE_IDS[plan]) {
+    if (!PRICE_IDS[priceKey]) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
@@ -35,11 +38,11 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
+      line_items: [{ price: PRICE_IDS[priceKey], quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing`,
       customer_email: customerEmail,
-      metadata: { plan, user_id: userId ?? '' },
+      metadata: { plan, interval, user_id: userId ?? '' },
       allow_promotion_codes: true,
     })
 

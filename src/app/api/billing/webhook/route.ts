@@ -8,6 +8,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 const PLAN_PRICES: Record<string, { plan: 'starter' | 'pro'; price: number }> = {
   [process.env.STRIPE_STARTER_PRICE_ID || 'price_starter']: { plan: 'starter', price: 19 },
   [process.env.STRIPE_PRO_PRICE_ID || 'price_pro']: { plan: 'pro', price: 39 },
+  [process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_starter_annual']: { plan: 'starter', price: 205.20 },
+  [process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_pro_annual']: { plan: 'pro', price: 421.20 },
 }
 
 export async function POST(req: NextRequest) {

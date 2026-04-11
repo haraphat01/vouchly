@@ -4,7 +4,6 @@ import {
   Star,
   Zap,
   ArrowRight,
-  CheckCircle2,
   Quote,
   Video,
   Wand2,
@@ -22,6 +21,7 @@ import {
 } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import PricingSection from '@/components/PricingSection'
 
 const ICON_STROKE = 1.5
 const ICON_SIZE = 20
@@ -81,19 +81,19 @@ export default async function Home() {
 
   const plans = [
     {
-      name: t('plan_free_name'), price: '$0', period: t('per_month'),
+      name: t('plan_free_name'), monthlyPrice: '$0', annualMonthly: '$0', annualTotal: '$0', annualSavings: '$0', period: t('per_month'),
       features: [t('plan_free_f1'), t('plan_free_f2'), t('plan_free_f3'), t('plan_free_f4'), t('plan_free_f5')],
-      cta: t('plan_free_cta'), href: '/auth/signup', featured: false,
+      cta: t('plan_free_cta'), href: '/auth/signup', featured: false, isFree: true,
     },
     {
-      name: t('plan_starter_name'), price: '$19', period: t('per_month'),
+      name: t('plan_starter_name'), monthlyPrice: '$19', annualMonthly: '$17.10', annualTotal: '$205.20', annualSavings: '$22.80', period: t('per_month'),
       features: [t('plan_starter_f1'), t('plan_starter_f2'), t('plan_starter_f3'), t('plan_starter_f4'), t('plan_starter_f5'), t('plan_starter_f6'), t('plan_starter_f7')],
-      cta: t('plan_starter_cta'), href: '/auth/signup?plan=starter', featured: false,
+      cta: t('plan_starter_cta'), href: '/auth/signup?plan=starter', featured: false, isFree: false,
     },
     {
-      name: t('plan_pro_name'), price: '$39', period: t('per_month'),
+      name: t('plan_pro_name'), monthlyPrice: '$39', annualMonthly: '$35.10', annualTotal: '$421.20', annualSavings: '$46.80', period: t('per_month'),
       features: [t('plan_pro_f1'), t('plan_pro_f2'), t('plan_pro_f3'), t('plan_pro_f4'), t('plan_pro_f5'), t('plan_pro_f6'), t('plan_pro_f7')],
-      cta: t('plan_pro_cta'), href: '/auth/signup?plan=pro', featured: true,
+      cta: t('plan_pro_cta'), href: '/auth/signup?plan=pro', featured: true, isFree: false,
     },
   ]
 
@@ -239,32 +239,12 @@ export default async function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" style={{ background: 'white', borderTop: '1px solid #eceae6', padding: 'clamp(2.5rem, 8vw, 5rem) 0' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.25rem' }}>
-          <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: '0.75rem' }}>{t('pricing_title')}</h2>
-          <p style={{ textAlign: 'center', color: 'var(--ink-muted)', marginBottom: 'clamp(1.5rem, 4vw, 3rem)' }}>{t('pricing_sub')}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', maxWidth: 900, margin: '0 auto' }}>
-            {plans.map((plan) => (
-              <div key={plan.name} style={{ border: plan.featured ? '2px solid var(--brand)' : '1px solid #eceae6', borderRadius: 'var(--radius-xl)', padding: 'clamp(1.25rem, 4vw, 2rem)', position: 'relative', background: plan.featured ? 'var(--paper)' : 'white' }}>
-                {plan.featured && <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'var(--brand)', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.9rem', borderRadius: 100 }}>{t('most_popular')}</div>}
-                <h3 style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>{plan.name}</h3>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: '1.5rem' }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 700, color: 'var(--ink)' }}>{plan.price}</span>
-                  <span style={{ color: 'var(--ink-muted)', fontSize: '0.9rem' }}>{plan.period}</span>
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  {plan.features.map(f => (
-                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', color: 'var(--ink)' }}>
-                      <CheckCircle2 size={15} color="var(--brand)" style={{ flexShrink: 0 }} /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.href} className={`btn ${plan.featured ? 'btn-primary' : 'btn-secondary'}`} style={{ width: '100%', justifyContent: 'center' }}>{plan.cta}</Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection
+        plans={plans}
+        title={t('pricing_title')}
+        subtitle={t('pricing_sub')}
+        mostPopularLabel={t('most_popular')}
+      />
 
       {/* Final CTA */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem', textAlign: 'center' }}>

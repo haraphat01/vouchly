@@ -39,6 +39,8 @@ export const PLANS = {
   free: {
     name: 'Free',
     price: 0,
+    annualPrice: 0,
+    annualMonthly: 0,
     testimonials: 5,
     spaces: 1,
     ai: false,
@@ -50,6 +52,8 @@ export const PLANS = {
   starter: {
     name: 'Starter',
     price: 19,
+    annualPrice: 205.20, // $19 × 12 × 0.9 (10% off)
+    annualMonthly: 17.10,
     testimonials: -1, // unlimited
     spaces: 3,
     ai: true,
@@ -61,6 +65,8 @@ export const PLANS = {
   pro: {
     name: 'Pro',
     price: 39,
+    annualPrice: 421.20, // $39 × 12 × 0.9 (10% off)
+    annualMonthly: 35.10,
     testimonials: -1,
     spaces: -1,
     ai: true,
