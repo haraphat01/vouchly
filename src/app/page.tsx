@@ -22,6 +22,7 @@ import {
 import { getTranslations } from 'next-intl/server'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import PricingSection from '@/components/PricingSection'
+import { getAllPosts } from '@/lib/blog'
 
 const ICON_STROKE = 1.5
 const ICON_SIZE = 20
@@ -78,6 +79,8 @@ export default async function Home() {
     { Icon: AlignLeft, problem: 'The ones you get are too vague to convert', fix: 'AI rewrites them into compelling, specific stories' },
     { Icon: Monitor, problem: 'Nowhere to display them that looks good', fix: 'One script tag creates a stunning wall on your site' },
   ]
+
+  const blogPosts = getAllPosts().slice(0, 3)
 
   const plans = [
     {
@@ -245,6 +248,39 @@ export default async function Home() {
         subtitle={t('pricing_sub')}
         mostPopularLabel={t('most_popular')}
       />
+
+      {/* From the Blog */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)', gap: '1rem', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', margin: 0 }}>From the blog</h2>
+          <Link href="/blog" style={{ fontSize: '0.875rem', color: 'var(--brand)', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            All articles <ArrowRight size={13} />
+          </Link>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(1rem, 2vw, 1.5rem)' }}>
+          {blogPosts.map((post) => (
+            <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
+              <article className="card card-hover" style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.6rem', cursor: 'pointer' }}>
+                <span style={{ alignSelf: 'flex-start', background: 'var(--brand-light)', color: '#7a3815', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: 100 }}>
+                  {post.category}
+                </span>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, margin: 0 }}>
+                  {post.title}
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', lineHeight: 1.6, margin: 0, flex: 1 }}>
+                  {post.description}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid #f5ede0' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>
+                    {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>{post.readingTime}</span>
+                </div>
+              </article>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* Final CTA */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(2.5rem, 8vw, 5rem) 1.25rem', textAlign: 'center' }}>

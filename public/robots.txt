@@ -44,3 +44,5 @@ User-agent: Meta-ExternalAgent
 Allow: /
 
 Sitemap: https://vouchly.app/sitemap.xml
+# AI-readable site summary (llms.txt standard)
+# https://vouchly.app/llms.txt

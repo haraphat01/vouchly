@@ -1,0 +1,44 @@
+# Vouchly
+
+> Vouchly is a testimonial collection and display platform for small businesses. Collect text and video testimonials from customers, polish them with AI, and embed a live testimonial wall on any website — all from a single script tag.
+
+## Product
+
+Vouchly helps business owners, consultants, coaches, agencies, and SaaS founders build social proof systems that convert visitors into customers. Key capabilities:
+
+- **Testimonial collection**: Share a branded link; customers submit text or video testimonials in under 2 minutes
+- **AI polish**: An AI rewriter turns vague responses into specific, compelling testimonials
+- **Testimonial wall**: Embed a live, auto-updating grid of testimonials on any website with a single script tag
+- **Analytics**: Proof Score™ tracks the impact of your testimonials over time
+- **Video testimonials**: Collect and display video testimonials (Pro plan)
+- **Custom domain**: Use your own domain for collection pages (Pro plan)
+
+## Pricing
+
+- **Free**: Up to 5 testimonials, 1 space, text only — free forever
+- **Starter**: $19/month (or $17.10/month billed annually) — unlimited testimonials, 3 spaces, AI rewriter, remove branding
+- **Pro**: $39/month (or $35.10/month billed annually) — everything in Starter plus video testimonials, unlimited spaces, custom domain, priority support
+
+Annual plans save 10%.
+
+## Blog
+
+Practical guides on testimonial collection, social proof strategy, and conversion optimization:
+
+- [Best Testimonial Software for Small Businesses in 2025](/blog/best-testimonial-software-small-business)
+- [How to Collect Customer Testimonials That Actually Convert](/blog/how-to-collect-customer-testimonials)
+- [How to Add a Testimonial Wall to Your Website in 5 Minutes](/blog/add-testimonial-wall-to-website)
+
+## Key Pages
+
+- Homepage: https://vouchly.app
+- Blog: https://vouchly.app/blog
+- Pricing: https://vouchly.app/#pricing
+- Sign up: https://vouchly.app/auth/signup
+- Sitemap: https://vouchly.app/sitemap.xml
+
+## Company
+
+Vouchly is a SaaS product built to help small businesses collect and leverage customer testimonials. The company is focused on the US market but serves customers globally.
+
+Contact: support@vouchly.tech
