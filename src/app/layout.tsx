@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, getLocale } from 'next-intl/server'
 import { Toaster } from 'sonner'
 import './globals.css'
-import { GoogleTagManager } from '@next/third-parties/google'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import QueryProvider from '@/components/QueryProvider'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vouchly.app'
@@ -113,7 +113,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <GoogleTagManager gtmId="G-NNVY3LGBT4" />
+        <GoogleAnalytics gaId="G-NNVY3LGBT4" />
       </head>
       <body className="grain">
         <QueryProvider>
