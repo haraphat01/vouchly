@@ -7,6 +7,7 @@ const LOCALES = [
   { code: 'en', flag: '🇺🇸', name: 'English' },
   { code: 'fr', flag: '🇫🇷', name: 'Français' },
   { code: 'es', flag: '🇪🇸', name: 'Español' },
+  { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
 ]
 
 export default function LanguageSwitcher({ style }: { style?: React.CSSProperties }) {

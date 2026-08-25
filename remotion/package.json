@@ -1,0 +1,19 @@
+{
+  "name": "vouchly-promo",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "preview": "remotion studio src/index.ts",
+    "render:en": "remotion render src/index.ts PromoEN out/vouchly-promo-en.mp4",
+    "render:fr": "remotion render src/index.ts PromoFR out/vouchly-promo-fr.mp4",
+    "render:es": "remotion render src/index.ts PromoES out/vouchly-promo-es.mp4",
+    "render:de": "remotion render src/index.ts PromoDE out/vouchly-promo-de.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.517",
+    "@remotion/google-fonts": "^4.0.517",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.517"
+  }
+}

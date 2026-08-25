@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const SUPPORTED = ['en', 'fr', 'es']
+const SUPPORTED = ['en', 'fr', 'es', 'de']
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
