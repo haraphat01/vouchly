@@ -2,11 +2,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { Quote, LayoutDashboard, MessageSquareQuote, Settings, LogOut, Plus, Zap, Menu, X } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('dashboard.nav')
   const router = useRouter()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -32,9 +34,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   }
 
   const navItems = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/spaces', label: 'Spaces', icon: MessageSquareQuote },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard', label: t('overview'), icon: LayoutDashboard },
+    { href: '/dashboard/spaces', label: t('spaces'), icon: MessageSquareQuote },
+    { href: '/dashboard/settings', label: t('settings'), icon: Settings },
   ]
 
   if (authed === null || isLoading) {
@@ -44,7 +46,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           <div style={{ width: 40, height: 40, background: 'var(--brand)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', animation: 'pulse 1.5s infinite' }}>
             <Quote size={20} color="white" />
           </div>
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.9rem' }}>Loading…</p>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.9rem' }}>{t('loading')}</p>
         </div>
       </div>
     )
@@ -61,7 +63,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
       <div style={{ padding: '1rem', flex: 1, overflowY: 'auto' }}>
         <Link href="/dashboard/spaces/new" className="btn btn-primary" onClick={onNavClick} style={{ width: '100%', justifyContent: 'center', marginBottom: '1rem', fontSize: '0.85rem' }}>
-          <Plus size={15} /> New Space
+          <Plus size={15} /> {t('new_space')}
         </Link>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {navItems.map(({ href, label, icon: Icon }) => {
@@ -80,10 +82,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           <div style={{ background: 'var(--brand-light)', borderRadius: 10, padding: '0.9rem', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.35rem' }}>
               <Zap size={13} color="var(--brand)" />
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#7a3815' }}>Upgrade to unlock AI</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#7a3815' }}>{t('upgrade_title')}</span>
             </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginBottom: '0.6rem', lineHeight: 1.4 }}>AI rewriter, unlimited testimonials, no branding.</p>
-            <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" onClick={onNavClick} style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem', width: '100%', justifyContent: 'center' }}>Upgrade — $19/mo</Link>
+            <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginBottom: '0.6rem', lineHeight: 1.4 }}>{t('upgrade_desc')}</p>
+            <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" onClick={onNavClick} style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem', width: '100%', justifyContent: 'center' }}>{t('upgrade_cta')}</Link>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.5rem' }}>
@@ -91,12 +93,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             {profile?.full_name?.split(' ').map(n => n[0]).join('') || profile?.email?.[0]?.toUpperCase() || '?'}
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile?.full_name || 'User'}</div>
-            <div className={`badge badge-${profile?.plan === 'pro' ? 'brand' : profile?.plan === 'starter' ? 'blue' : 'gray'}`} style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem' }}>{profile?.plan || 'free'}</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile?.full_name || t('user_fallback')}</div>
+            <div className={`badge badge-${profile?.plan === 'pro' ? 'brand' : profile?.plan === 'starter' ? 'blue' : 'gray'}`} style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem' }}>{t(`plan_${profile?.plan || 'free'}` as 'plan_free' | 'plan_starter' | 'plan_pro')}</div>
           </div>
         </div>
         <button onClick={handleLogout} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.85rem', padding: '0.45rem 0.5rem' }}>
-          <LogOut size={14} /> Sign out
+          <LogOut size={14} /> {t('sign_out')}
         </button>
       </div>
     </aside>

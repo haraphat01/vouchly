@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
 import { generateSlug, PLANS } from '@/lib/utils'
@@ -9,6 +10,7 @@ import { ArrowLeft, Loader2, Plus, X, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function NewSpacePage() {
+  const t = useTranslations('dashboard.spaces_new')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -85,7 +87,7 @@ export default function NewSpacePage() {
     })
     const data = await res.json()
     if (!res.ok) {
-      toast.error(data.error || 'Failed to create space')
+      toast.error(data.error || t('create_failed'))
       setLoading(false)
     } else {
       router.push('/dashboard/spaces')
@@ -109,21 +111,21 @@ export default function NewSpacePage() {
     return (
       <div className="dash-page" style={{ maxWidth: 680 }}>
         <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
-          <ArrowLeft size={15} /> Back to spaces
+          <ArrowLeft size={15} /> {t('back_to_spaces')}
         </Link>
         <div className="card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
             <Lock size={24} color="var(--brand)" />
           </div>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Space limit reached</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>{t('limit_title')}</h2>
           <p style={{ color: 'var(--ink-muted)', marginBottom: '0.5rem', lineHeight: 1.6 }}>
-            Your <strong>{planConfig.name}</strong> plan includes <strong>{planConfig.spaces} space{planConfig.spaces !== 1 ? 's' : ''}</strong>. You've used all of them.
+            {t.rich('limit_desc1', { b: (chunks) => <strong>{chunks}</strong>, plan: planConfig.name, count: planConfig.spaces })}
           </p>
           <p style={{ color: 'var(--ink-muted)', marginBottom: '2rem', lineHeight: 1.6, fontSize: '0.9rem' }}>
-            Upgrade to {profile?.plan === 'free' ? 'Starter (3 spaces) or Pro (unlimited)' : 'Pro for unlimited spaces'} to create more.
+            {profile?.plan === 'free' ? t('limit_desc2_free') : t('limit_desc2_paid')}
           </p>
           <Link href="/dashboard/settings?tab=billing" className="btn btn-primary" style={{ justifyContent: 'center' }}>
-            Upgrade your plan
+            {t('upgrade_cta')}
           </Link>
         </div>
       </div>
@@ -133,21 +135,21 @@ export default function NewSpacePage() {
   return (
     <div className="dash-page" style={{ maxWidth: 680 }}>
       <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
-        <ArrowLeft size={15} /> Back to spaces
+        <ArrowLeft size={15} /> {t('back_to_spaces')}
       </Link>
-      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Create a space</h1>
-      <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>A space is a branded collection page for a product or service.</p>
+      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{t('title')}</h1>
+      <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>{t('subtitle')}</p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Basic info */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>Basic info</h2>
+          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>{t('section_basic')}</h2>
           <div>
-            <label className="label">Space name *</label>
-            <input className="input" value={form.name} onChange={e => handleNameChange(e.target.value)} placeholder="e.g. Acme SaaS, My Agency, Course Pro" required />
+            <label className="label">{t('name_label')}</label>
+            <input className="input" value={form.name} onChange={e => handleNameChange(e.target.value)} placeholder={t('name_placeholder')} required />
           </div>
           <div>
-            <label className="label">URL slug *</label>
+            <label className="label">{t('slug_label')}</label>
             <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #d5d1c9', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
               <span style={{ padding: '0.65rem 0.75rem', background: 'var(--paper)', color: 'var(--ink-muted)', fontSize: '0.85rem', borderRight: '1px solid #d5d1c9', whiteSpace: 'nowrap' }}>
                 /collect/
@@ -157,44 +159,44 @@ export default function NewSpacePage() {
             </div>
           </div>
           <div>
-            <label className="label">Description <span style={{ color: 'var(--ink-subtle)', fontWeight: 400 }}>(optional)</span></label>
-            <textarea className="input" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of your product/service" rows={2} style={{ resize: 'vertical' }} />
+            <label className="label">{t('description_label')} <span style={{ color: 'var(--ink-subtle)', fontWeight: 400 }}>{t('description_optional')}</span></label>
+            <textarea className="input" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder={t('description_placeholder')} rows={2} style={{ resize: 'vertical' }} />
           </div>
         </div>
 
         {/* Collection form */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>Collection form</h2>
+          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>{t('section_form')}</h2>
           <div>
-            <label className="label">Headline</label>
+            <label className="label">{t('headline_label')}</label>
             <input className="input" value={form.header_title} onChange={e => setForm(f => ({ ...f, header_title: e.target.value }))} />
           </div>
           <div>
-            <label className="label">Message</label>
+            <label className="label">{t('message_label')}</label>
             <textarea className="input" value={form.header_message} onChange={e => setForm(f => ({ ...f, header_message: e.target.value }))} rows={2} style={{ resize: 'vertical' }} />
           </div>
           <div>
-            <label className="label">Accept</label>
+            <label className="label">{t('accept_label')}</label>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               {/* Text testimonials — always available */}
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
                 <input type="checkbox" checked={form.collect_text}
                   onChange={e => setForm(f => ({ ...f, collect_text: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
-                💬 Text testimonials
+                💬 {t('text_checkbox')}
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
                 <input type="checkbox" checked={form.rating_required}
                   onChange={e => setForm(f => ({ ...f, rating_required: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
-                ⭐ Rating required
+                ⭐ {t('rating_checkbox')}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
                 <input type="checkbox" checked={form.auto_approve}
                   onChange={e => setForm(f => ({ ...f, auto_approve: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer' }} />
-                ✅ Auto-approve submissions
+                ✅ {t('auto_approve_checkbox')}
               </label>
 
               {/* Video testimonials — Pro only */}
@@ -204,10 +206,10 @@ export default function NewSpacePage() {
                   disabled={!canVideo}
                   onChange={e => canVideo && setForm(f => ({ ...f, collect_video: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: canVideo ? 'pointer' : 'not-allowed' }} />
-                🎥 Video testimonials
+                🎥 {t('video_checkbox')}
                 {!canVideo && (
                   <Link href="/dashboard/settings?tab=billing" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '0.75rem', color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>
-                    <Lock size={11} /> Pro
+                    <Lock size={11} /> {t('pro_badge')}
                   </Link>
                 )}
               </label>
@@ -218,8 +220,8 @@ export default function NewSpacePage() {
         {/* Questions */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <h2 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Questions to ask submitters</h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', margin: 0 }}>These appear on your collection form to guide better responses. They are <strong>not</strong> shown on the testimonial wall — only the written testimonial is displayed. Name is already collected separately, so don't add it here.</p>
+            <h2 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>{t('section_questions')}</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', margin: 0 }}>{t.rich('questions_desc', { b: (chunks) => <strong>{chunks}</strong> })}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {form.questions.map((q, i) => (
@@ -232,16 +234,16 @@ export default function NewSpacePage() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input className="input" value={newQuestion} onChange={e => setNewQuestion(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addQuestion())}
-              placeholder="Add a question…" style={{ flex: 1 }} />
+              placeholder={t('question_placeholder')} style={{ flex: 1 }} />
             <button type="button" onClick={addQuestion} className="btn btn-secondary"><Plus size={14} /></button>
           </div>
         </div>
 
         {/* Appearance */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>Appearance</h2>
+          <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>{t('section_appearance')}</h2>
           <div>
-            <label className="label">Accent color</label>
+            <label className="label">{t('accent_color_label')}</label>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
               {['#d4751f', '#2e7d4f', '#1a5fa8', '#7c5cbf', '#c0392b', '#1a7a7a'].map(c => (
                 <button key={c} type="button" onClick={() => setForm(f => ({ ...f, theme_color: c }))}
@@ -254,9 +256,9 @@ export default function NewSpacePage() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Link href="/dashboard/spaces" className="btn btn-secondary">Cancel</Link>
+          <Link href="/dashboard/spaces" className="btn btn-secondary">{t('cancel')}</Link>
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ flex: 1, justifyContent: 'center' }}>
-            {loading ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Creating…</> : 'Create space'}
+            {loading ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('creating')}</> : t('create')}
           </button>
         </div>
       </form>

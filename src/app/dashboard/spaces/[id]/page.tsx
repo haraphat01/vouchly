@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { formatDate, truncate, PLANS } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
@@ -46,6 +47,7 @@ import { useTestimonials, useUpdateTestimonialStatus, useDeleteTestimonial, useP
 import { useProfile } from '@/hooks/useProfile'
 
 export default function SpaceDetailPage() {
+  const dt = useTranslations('dashboard.space_detail')
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [tab, setTab] = useState<'all' | 'pending' | 'approved' | 'archived'>('all')
@@ -106,7 +108,7 @@ export default function SpaceDetailPage() {
     if (!session) return
     deleteTestimonialMutation.mutate({ id: tid, spaceId: id, token: session.access_token }, {
       onSuccess: () => {
-        toast(`Testimonial from ${name} deleted`)
+        toast(dt('deleted_toast', { name }))
       },
     })
   }
@@ -131,7 +133,7 @@ export default function SpaceDetailPage() {
     if (!t.content) return
     const { data: { session } } = await supabase.auth.getSession()
     polishMutation.mutate({ testimonial: t, spaceId: id, token: session?.access_token || '' }, {
-      onError: (err) => toast.error(err.message || 'Failed to polish testimonial'),
+      onError: (err) => toast.error(err.message || dt('polish_failed')),
     })
   }
 
@@ -149,8 +151,8 @@ export default function SpaceDetailPage() {
       ...(editContent !== t.content && { content: editContent }),
       ...(editAiContent !== t.ai_enhanced_content && { aiContent: editAiContent }),
     }, {
-      onSuccess: () => { setEditingId(null); toast('Testimonial saved') },
-      onError: (err) => toast.error(err.message || 'Failed to save'),
+      onSuccess: () => { setEditingId(null); toast(dt('saved_toast')) },
+      onError: (err) => toast.error(err.message || dt('save_failed')),
     })
   }
 
@@ -180,29 +182,29 @@ export default function SpaceDetailPage() {
   const embedCode = space ? `<script src="${origin}/embed.js" data-space="${space.slug}" async></script>` : ''
 
   if (spaceLoading || testimonialsLoading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
-  if (!space) return <div className="dash-page">Space not found.</div>
+  if (!space) return <div className="dash-page">{dt('not_found')}</div>
 
   const PAGE_TABS = [
-    { key: 'testimonials', label: 'Testimonials', count: testimonials.filter(t => t.status === 'pending').length },
-    { key: 'settings', label: 'Settings' },
-    { key: 'growth', label: 'Growth' },
-    { key: 'analytics', label: 'Analytics' },
+    { key: 'testimonials', label: dt('tab_testimonials'), count: testimonials.filter(t => t.status === 'pending').length },
+    { key: 'settings', label: dt('tab_settings') },
+    { key: 'growth', label: dt('tab_growth') },
+    { key: 'analytics', label: dt('tab_analytics') },
   ] as const
 
   return (
     <div className="dash-page" style={{ maxWidth: 1000 }}>
       {/* Header */}
       <Link href="/dashboard/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-        <ArrowLeft size={15} /> All spaces
+        <ArrowLeft size={15} /> {dt('all_spaces')}
       </Link>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{space.name}</h1>
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>{testimonials.length} testimonials · {testimonials.filter(t => t.status === 'pending').length} pending review</p>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>{dt('stats_line', { count: testimonials.length, pending: testimonials.filter(t => t.status === 'pending').length })}</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Link href={collectUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Collect</Link>
-          <Link href={wallUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> Wall</Link>
+          <Link href={collectUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> {dt('collect_btn')}</Link>
+          <Link href={wallUrl} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}><ExternalLink size={14} /> {dt('wall_btn')}</Link>
         </div>
       </div>
 
@@ -223,8 +225,8 @@ export default function SpaceDetailPage() {
           {/* Quick links */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
             {[
-              { label: 'Collection link', value: collectUrl, key: 'collect' },
-              { label: 'Wall page', value: wallUrl, key: 'wall' },
+              { label: dt('testimonials_tab.collection_link'), value: collectUrl, key: 'collect' },
+              { label: dt('testimonials_tab.wall_page'), value: wallUrl, key: 'wall' },
             ].map(({ label, value, key }) => (
               <div key={key} style={{ background: 'var(--paper)', border: '1px solid #eceae6', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -244,7 +246,7 @@ export default function SpaceDetailPage() {
               const count = t === 'all' ? testimonials.length : testimonials.filter(x => x.status === t).length
               return (
                 <button key={t} onClick={() => setTab(t)} style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid var(--brand)' : '2px solid transparent', cursor: 'pointer', fontSize: '0.875rem', fontWeight: tab === t ? 600 : 400, color: tab === t ? 'var(--brand)' : 'var(--ink-muted)', textTransform: 'capitalize', marginBottom: -1 }}>
-                  {t} {count > 0 && <span className="badge badge-gray" style={{ fontSize: '0.65rem', marginLeft: 4 }}>{count}</span>}
+                  {dt(`testimonials_tab.filter_${t}` as 'testimonials_tab.filter_all')} {count > 0 && <span className="badge badge-gray" style={{ fontSize: '0.65rem', marginLeft: 4 }}>{count}</span>}
                 </button>
               )
             })}
@@ -254,8 +256,8 @@ export default function SpaceDetailPage() {
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--ink-muted)' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🔍</div>
-              <p>No {tab === 'all' ? '' : tab} testimonials yet.</p>
-              {tab === 'all' && <p style={{ fontSize: '0.85rem' }}>Share your collection link to start receiving testimonials.</p>}
+              <p>{tab === 'all' ? dt('testimonials_tab.empty_title_all') : dt('testimonials_tab.empty_title', { tab: dt(`testimonials_tab.filter_${tab}` as 'testimonials_tab.filter_all') })}</p>
+              {tab === 'all' && <p style={{ fontSize: '0.85rem' }}>{dt('testimonials_tab.empty_hint')}</p>}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -281,7 +283,7 @@ export default function SpaceDetailPage() {
                           {[...Array(5)].map((_, i) => <Star key={i} size={12} fill={i < t.rating! ? '#e8963a' : 'none'} color={i < t.rating! ? '#e8963a' : '#d5d1c9'} />)}
                         </div>
                       )}
-                      <span className={`badge ${t.status === 'approved' ? 'badge-green' : t.status === 'archived' ? 'badge-red' : 'badge-amber'}`} style={{ fontSize: '0.68rem' }}>{t.status}</span>
+                      <span className={`badge ${t.status === 'approved' ? 'badge-green' : t.status === 'archived' ? 'badge-red' : 'badge-amber'}`} style={{ fontSize: '0.68rem' }}>{dt(`testimonials_tab.filter_${t.status}` as 'testimonials_tab.filter_all')}</span>
                       <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>{t.type}</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--ink-subtle)' }}>{formatDate(t.created_at)}</span>
                     </div>
@@ -305,7 +307,7 @@ export default function SpaceDetailPage() {
                           )}
                           {(t.ai_enhanced_content || (editingId === t.id && editAiContent)) && (
                             <div style={{ background: 'var(--brand-light)', borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid var(--brand)' }}>
-                              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> AI-polished version</div>
+                              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 4 }}><Sparkles size={11} /> {dt('testimonials_tab.ai_polished')}</div>
                               {editingId === t.id ? (
                                 <textarea
                                   value={editAiContent}
@@ -322,7 +324,7 @@ export default function SpaceDetailPage() {
                       )}
                       {t.answers && Object.keys(t.answers).length > 0 && (
                         <div style={{ background: 'var(--paper)', borderRadius: 8, padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom answers</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dt('testimonials_tab.custom_answers')}</div>
                           {Object.entries(t.answers).map(([q, a]) => (
                             <div key={q}>
                               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.15rem' }}>{q}</div>
@@ -337,53 +339,53 @@ export default function SpaceDetailPage() {
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', paddingTop: '0.25rem', borderTop: '1px solid #f5ede0' }}>
                     {t.status !== 'approved' && (
                       <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'approved' })} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#2e7d4f' }}>
-                        <CheckCircle size={12} /> Approve
+                        <CheckCircle size={12} /> {dt('testimonials_tab.approve')}
                       </button>
                     )}
                     {t.status !== 'archived' && (
                       <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'archived' })} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b' }}>
-                        <Archive size={12} /> Archive
+                        <Archive size={12} /> {dt('testimonials_tab.archive')}
                       </button>
                     )}
                     {t.status !== 'pending' && (
                       <button onClick={() => updateStatus.mutate({ id: t.id, spaceId: id, status: 'pending' })} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
-                        Reset to pending
+                        {dt('testimonials_tab.reset_pending')}
                       </button>
                     )}
                     {t.status === 'approved' && (
                       <button onClick={() => copyText(`${typeof window !== 'undefined' ? window.location.origin : ''}/share/${t.id}`, `share-${t.id}`)}
                         className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
-                        <Share2 size={12} /> {copied === `share-${t.id}` ? '✓ Link copied!' : 'Share'}
+                        <Share2 size={12} /> {copied === `share-${t.id}` ? `✓ ${dt('testimonials_tab.share_copied')}` : dt('testimonials_tab.share')}
                       </button>
                     )}
                     {t.type === 'text' && editingId !== t.id && (
                       <button onClick={() => startEditing(t)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
-                        <Pencil size={12} /> Edit
+                        <Pencil size={12} /> {dt('testimonials_tab.edit')}
                       </button>
                     )}
                     {editingId === t.id && (
                       <>
                         <button onClick={() => saveEdit(t)} disabled={editMutation.isPending} className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
-                          {editMutation.isPending ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null} Save
+                          {editMutation.isPending ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null} {dt('testimonials_tab.save')}
                         </button>
                         <button onClick={() => setEditingId(null)} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}>
-                          Cancel
+                          {dt('testimonials_tab.cancel')}
                         </button>
                       </>
                     )}
                     <button onClick={() => deleteTestimonial(t.id, t.submitter_name)} className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: '#c0392b', marginLeft: 'auto' }}>
-                      <Trash2 size={12} /> Delete
+                      <Trash2 size={12} /> {dt('testimonials_tab.delete')}
                     </button>
                     {t.content && !t.ai_enhanced_content && (() => {
                       const canAI = PLANS[(profile?.plan || 'free') as keyof typeof PLANS].ai
                       return canAI ? (
                         <button onClick={() => polishWithAI(t)} disabled={polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id} className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--brand)' }}>
                           {polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={12} />}
-                          {polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id ? 'Polishing…' : 'Polish with AI'}
+                          {polishMutation.isPending && polishMutation.variables?.testimonial.id === t.id ? dt('testimonials_tab.polishing') : dt('testimonials_tab.polish_ai')}
                         </button>
                       ) : (
                         <Link href="/dashboard/settings?tab=billing" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          <Sparkles size={12} /> Polish with AI <span style={{ fontSize: '0.68rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.1rem 0.4rem', borderRadius: 4, fontWeight: 700 }}>Starter+</span>
+                          <Sparkles size={12} /> {dt('testimonials_tab.polish_ai')} <span style={{ fontSize: '0.68rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.1rem 0.4rem', borderRadius: 4, fontWeight: 700 }}>{dt('testimonials_tab.starter_plus_badge')}</span>
                         </Link>
                       )
                     })()}
@@ -400,17 +402,17 @@ export default function SpaceDetailPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Brand color */}
           <div className="card" style={{ background: 'white' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>Brand color</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>Used in your embed widget, collect page, and wall page.</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>{dt('settings_tab.brand_color_title')}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>{dt('settings_tab.brand_color_desc')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '0.85rem 1rem', background: 'var(--paper)', borderRadius: 10, border: '1px solid #eceae6' }}>
               <div style={{ width: 48, height: 48, borderRadius: 10, background: brandColor, flexShrink: 0 }} />
               <div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: '0.15rem' }}>Selected color</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: '0.15rem' }}>{dt('settings_tab.selected_color')}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>{brandColor.toUpperCase()}</div>
               </div>
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Presets</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dt('settings_tab.presets')}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {['#d4751f','#e85d2f','#c0392b','#e74c8b','#9b59b6','#7c5cbf','#3498db','#1a5fa8','#0891b2','#1a7a7a','#2e7d4f','#27ae60','#f39c12','#e67e22','#1a1713','#64748b'].map(c => (
                   <button key={c} type="button" onClick={() => { setBrandColor(c); setColorInput(c) }} title={c}
@@ -422,55 +424,55 @@ export default function SpaceDetailPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color picker</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dt('settings_tab.color_picker')}</div>
                 <input type="color" value={brandColor} onChange={e => { setBrandColor(e.target.value); setColorInput(e.target.value) }}
                   style={{ width: 48, height: 36, borderRadius: 8, border: '1px solid #d5d1c9', cursor: 'pointer', padding: 2 }} />
               </div>
               <div style={{ flex: '1 1 140px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paste hex code</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dt('settings_tab.paste_hex')}</div>
                 <input className="input" value={colorInput} onChange={e => setColorInput(e.target.value)}
                   onBlur={() => { const val = colorInput.startsWith('#') ? colorInput : '#' + colorInput; if (/^#[0-9a-fA-F]{6}$/.test(val)) { setBrandColor(val); setColorInput(val) } }}
                   onKeyDown={e => { if (e.key === 'Enter') { const val = colorInput.startsWith('#') ? colorInput : '#' + colorInput; if (/^#[0-9a-fA-F]{6}$/.test(val)) { setBrandColor(val); setColorInput(val) } } }}
                   placeholder="#000000" maxLength={7} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.875rem', width: '100%' }} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dt('settings_tab.generate')}</div>
                 <button type="button" className="btn btn-secondary" style={{ fontSize: '0.82rem' }} onClick={() => {
                   const flat = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#0ea5e9','#14b8a6','#84cc16','#f97316','#ef4444'].filter(c => c !== brandColor)
                   const pick = flat[Math.floor(Math.random() * flat.length)]
                   setBrandColor(pick); setColorInput(pick)
-                }}>🎨 Suggest</button>
+                }}>🎨 {dt('settings_tab.suggest_btn')}</button>
               </div>
             </div>
             <button onClick={saveBrandColor} className="btn btn-primary" disabled={savingColor} style={{ fontSize: '0.875rem' }}>
-              {colorSaved ? '✓ Color saved!' : savingColor ? 'Saving…' : 'Save brand color'}
+              {colorSaved ? `✓ ${dt('settings_tab.color_saved')}` : savingColor ? dt('settings_tab.saving') : dt('settings_tab.save_color')}
             </button>
           </div>
 
           {/* Collection settings */}
           <div className="card" style={{ background: 'white' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>Collection settings</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>Control how submissions are handled for this space.</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: '0.2rem' }}>{dt('settings_tab.collection_settings_title')}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>{dt('settings_tab.collection_settings_desc')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
                 <input type="checkbox" checked={ratingRequired} onChange={e => setRatingRequired(e.target.checked)}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer', marginTop: 2, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>⭐ Rating required</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>Submitters must choose a star rating before they can submit.</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>⭐ {dt('settings_tab.rating_required_title')}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>{dt('settings_tab.rating_required_desc')}</div>
                 </div>
               </label>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
                 <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)}
                   style={{ width: 16, height: 16, accentColor: 'var(--brand)', cursor: 'pointer', marginTop: 2, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>✅ Auto-approve submissions</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>New testimonials go straight to approved without manual review.</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>✅ {dt('settings_tab.auto_approve_title')}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.15rem' }}>{dt('settings_tab.auto_approve_desc')}</div>
                 </div>
               </label>
             </div>
             <button onClick={saveSettings} className="btn btn-primary" disabled={savingSettings} style={{ fontSize: '0.875rem' }}>
-              {settingsSaved ? '✓ Saved!' : savingSettings ? 'Saving…' : 'Save settings'}
+              {settingsSaved ? `✓ ${dt('settings_tab.settings_saved')}` : savingSettings ? dt('settings_tab.saving') : dt('settings_tab.save_settings')}
             </button>
           </div>
         </div>
@@ -483,19 +485,19 @@ export default function SpaceDetailPage() {
           <div className="card" style={{ background: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
               <Mail size={15} color="var(--brand)" />
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>Send invitation</div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>{dt('growth_tab.invite_title')}</div>
             </div>
             <form onSubmit={sendInvite} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: '1 1 180px' }}>
-                <label className="label" style={{ fontSize: '0.78rem' }}>Name</label>
-                <input className="input" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder="Customer name" style={{ fontSize: '0.875rem' }} />
+                <label className="label" style={{ fontSize: '0.78rem' }}>{dt('growth_tab.invite_name_label')}</label>
+                <input className="input" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder={dt('growth_tab.invite_name_placeholder')} style={{ fontSize: '0.875rem' }} />
               </div>
               <div style={{ flex: '2 1 220px' }}>
-                <label className="label" style={{ fontSize: '0.78rem' }}>Email *</label>
-                <input className="input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="customer@example.com" required style={{ fontSize: '0.875rem' }} />
+                <label className="label" style={{ fontSize: '0.78rem' }}>{dt('growth_tab.invite_email_label')}</label>
+                <input className="input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder={dt('growth_tab.invite_email_placeholder')} required style={{ fontSize: '0.875rem' }} />
               </div>
               <button type="submit" className="btn btn-primary" disabled={sendingInvite} style={{ fontSize: '0.875rem', padding: '0.6rem 1.1rem' }}>
-                {sendingInvite ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : inviteSent ? '✓ Sent!' : <><Send size={14} /> Send</>}
+                {sendingInvite ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : inviteSent ? `✓ ${dt('growth_tab.sent')}` : <><Send size={14} /> {dt('growth_tab.send')}</>}
               </button>
             </form>
           </div>
@@ -504,11 +506,11 @@ export default function SpaceDetailPage() {
           <div className="card" style={{ background: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem' }}>
               <Code2 size={15} color="var(--brand)" />
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>Embed on your website</div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>{dt('growth_tab.embed_title')}</div>
             </div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>Add a live testimonial widget to any website with one line of code.</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>{dt('growth_tab.embed_desc')}</p>
             <button onClick={() => setShowEmbed(true)} className="btn btn-primary" style={{ fontSize: '0.875rem' }}>
-              <Code2 size={14} /> Open embed guide
+              <Code2 size={14} /> {dt('growth_tab.open_embed_guide')}
             </button>
           </div>
 
@@ -516,20 +518,20 @@ export default function SpaceDetailPage() {
           <div className="card" style={{ background: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
               <Link2 size={15} color="var(--brand)" />
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>Campaign links</div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>{dt('growth_tab.campaign_title')}</div>
             </div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>Share trackable links to see which channel drives the most testimonials.</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1rem' }}>{dt('growth_tab.campaign_desc')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
               {([
                 { label: 'Instagram', ref: 'instagram', Icon: Instagram },
                 { label: 'TikTok', ref: 'tiktok', Icon: Music2 },
-                { label: 'Email', ref: 'email', Icon: Mail },
+                { label: dt('growth_tab.channel_email'), ref: 'email', Icon: Mail },
                 { label: 'WhatsApp', ref: 'whatsapp', Icon: MessageCircle },
                 { label: 'LinkedIn', ref: 'linkedin', Icon: Linkedin },
                 { label: 'Facebook', ref: 'facebook', Icon: Facebook },
                 { label: 'Twitter / X', ref: 'twitter', Icon: Twitter },
-                { label: 'Flyer / Print', ref: 'print', Icon: Printer },
-                { label: 'Podcast', ref: 'podcast', Icon: Mic },
+                { label: dt('growth_tab.channel_print'), ref: 'print', Icon: Printer },
+                { label: dt('growth_tab.channel_podcast'), ref: 'podcast', Icon: Mic },
                 { label: 'YouTube', ref: 'youtube', Icon: Youtube },
               ] satisfies { label: string; ref: string; Icon: LucideIcon }[]).map(({ label, Icon, ref }) => {
                 const url = `${collectUrl}?ref=${ref}`
@@ -554,7 +556,7 @@ export default function SpaceDetailPage() {
                     <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', width: 90, flexShrink: 0 }}>{label}</span>
                     <span style={{ flex: 1, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
                     <button onClick={() => copyText(url, key)} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', flexShrink: 0, fontSize: '0.75rem' }}>
-                      <Copy size={12} /> {copied === key ? '✓' : 'Copy'}
+                      <Copy size={12} /> {copied === key ? '✓' : dt('growth_tab.copy')}
                     </button>
                   </div>
                 )
@@ -562,10 +564,10 @@ export default function SpaceDetailPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <input className="input" value={customSource} onChange={e => setCustomSource(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                placeholder="custom-source" style={{ flex: 1, fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }} />
+                placeholder={dt('growth_tab.custom_source_placeholder')} style={{ flex: 1, fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }} />
               <button onClick={() => { if (customSource) copyText(`${collectUrl}?ref=${customSource}`, 'campaign-custom') }}
                 className="btn btn-primary" style={{ fontSize: '0.82rem', flexShrink: 0 }}>
-                <Copy size={13} /> {copied === 'campaign-custom' ? '✓ Copied!' : 'Copy link'}
+                <Copy size={13} /> {copied === 'campaign-custom' ? `✓ ${dt('growth_tab.copied')}` : dt('growth_tab.copy_link')}
               </button>
             </div>
             {customSource && <p style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: '0.4rem', fontFamily: 'var(--font-mono)' }}>{collectUrl}?ref={customSource}</p>}
@@ -575,18 +577,18 @@ export default function SpaceDetailPage() {
           <div className="card" style={{ background: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
               <QrCode size={15} color="var(--brand)" />
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>QR Code</div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>{dt('growth_tab.qr_title')}</div>
             </div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>Print or display in-store, on packaging, or in receipts. Scanning opens your collection page.</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: '1.25rem' }}>{dt('growth_tab.qr_desc')}</p>
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div style={{ background: 'var(--paper)', padding: '1rem', borderRadius: 12, border: '1px solid #eceae6', display: 'inline-block' }}>
                 <QRCode id="space-qr-code" value={collectUrl} size={160} fgColor="#1a1713" bgColor="white" />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'center' }}>
                 <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{collectUrl}</div>
-                <button onClick={downloadQR} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>⬇ Download SVG</button>
+                <button onClick={downloadQR} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>⬇ {dt('growth_tab.download_svg')}</button>
                 <button onClick={() => copyText(collectUrl, 'qr-url')} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-                  <Copy size={13} /> {copied === 'qr-url' ? '✓ Copied!' : 'Copy link'}
+                  <Copy size={13} /> {copied === 'qr-url' ? `✓ ${dt('growth_tab.copied')}` : dt('growth_tab.copy_link')}
                 </button>
               </div>
             </div>
@@ -602,13 +604,13 @@ export default function SpaceDetailPage() {
             {/* Stats row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
               {[
-                { label: 'Total', value: testimonials.length },
-                { label: 'Approved', value: testimonials.filter(t => t.status === 'approved').length },
-                { label: 'Pending', value: testimonials.filter(t => t.status === 'pending').length },
-                { label: 'With rating', value: testimonials.filter(t => t.rating).length },
-                { label: 'With video', value: testimonials.filter(t => t.video_url).length },
+                { label: dt('analytics_tab.stat_total'), value: testimonials.length },
+                { label: dt('analytics_tab.stat_approved'), value: testimonials.filter(t => t.status === 'approved').length },
+                { label: dt('analytics_tab.stat_pending'), value: testimonials.filter(t => t.status === 'pending').length },
+                { label: dt('analytics_tab.stat_with_rating'), value: testimonials.filter(t => t.rating).length },
+                { label: dt('analytics_tab.stat_with_video'), value: testimonials.filter(t => t.video_url).length },
                 {
-                  label: 'Avg rating',
+                  label: dt('analytics_tab.stat_avg_rating'),
                   value: testimonials.filter(t => t.rating).length
                     ? (testimonials.reduce((a, t) => a + (t.rating || 0), 0) / testimonials.filter(t => t.rating).length).toFixed(1)
                     : null,
@@ -619,7 +621,7 @@ export default function SpaceDetailPage() {
                     {value === null ? '—' : (
                       <>
                         {value}
-                        {label === 'Avg rating' && (
+                        {label === dt('analytics_tab.stat_avg_rating') && (
                           <Star size={15} strokeWidth={1.5} color="#e8963a" fill="#e8963a" style={{ flexShrink: 0 }} aria-hidden />
                         )}
                       </>
@@ -634,24 +636,24 @@ export default function SpaceDetailPage() {
             <div className="card" style={{ background: 'white' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem' }}>
                 <Gauge size={16} strokeWidth={1.5} color="var(--brand)" aria-hidden />
-                <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>Proof Score™</span>
+                <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>{dt('analytics_tab.proof_score_title')}</span>
                 <span style={{ fontSize: '0.72rem', background: 'var(--brand-light)', color: 'var(--brand)', padding: '0.15rem 0.5rem', borderRadius: 100, fontWeight: 700, letterSpacing: '0.03em' }}>BETA</span>
                 <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.9rem', color: ps.color }}>
                   <ProofGradeIcon name={ps.gradeIcon} size={16} color={ps.color} />
-                  {ps.grade}
+                  {dt(`analytics_tab.grade_${ps.gradeKey}` as 'analytics_tab.grade_elite')}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div style={{ flexShrink: 0, textAlign: 'center' }}>
                   <ProofScoreRing score={ps.total} color={ps.color} size={96} />
-                  <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: '0.35rem' }}>out of 100</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: '0.35rem' }}>{dt('analytics_tab.out_of_100')}</div>
                 </div>
                 <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {ps.dimensions.map(dim => (
-                    <div key={dim.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div key={dim.icon} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{ fontSize: '0.8rem', minWidth: 92, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-muted)', flexShrink: 0 }}>
                         <ProofDimensionIcon name={dim.icon} size={14} />
-                        {dim.label}
+                        {dt(`analytics_tab.dim_${dim.icon}` as 'analytics_tab.dim_volume')}
                       </span>
                       <div style={{ flex: 1, height: 6, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 3, background: ps.color, width: `${(dim.score / dim.max) * 100}%`, transition: 'width 0.6s ease' }} />
@@ -665,7 +667,7 @@ export default function SpaceDetailPage() {
                 <div style={{ marginTop: '1.25rem', borderTop: '1px solid #f0ece6', paddingTop: '1rem' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Lightbulb size={14} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0, color: 'var(--ink-muted)' }} />
-                    Tips to improve
+                    {dt('analytics_tab.tips_title')}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                     {ps.tips.map((tip, i) => (
@@ -673,7 +675,7 @@ export default function SpaceDetailPage() {
                         <span style={{ flexShrink: 0, paddingTop: 2 }}>
                           <ProofTipIcon name={tip.icon} size={15} />
                         </span>
-                        <span>{tip.text}</span>
+                        <span>{dt(`analytics_tab.tip_${tip.key}` as 'analytics_tab.tip_volume', tip.values)}</span>
                         <span style={{ marginLeft: 'auto', flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: ps.color, background: ps.color + '18', padding: '0.15rem 0.5rem', borderRadius: 100 }}>+{tip.impact} pts</span>
                       </div>
                     ))}

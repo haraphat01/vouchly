@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { PLANS } from '@/lib/utils'
 import { Loader2, CheckCircle2, User, CreditCard, Zap } from 'lucide-react'
@@ -7,6 +8,7 @@ import { useProfile } from '@/hooks/useProfile'
 import { useQueryClient } from '@tanstack/react-query'
 
 export default function SettingsPage() {
+  const t = useTranslations('dashboard.settings_page')
   const { data: profile, isLoading } = useProfile()
   const queryClient = useQueryClient()
   const [saving, setSaving] = useState(false)
@@ -51,14 +53,18 @@ export default function SettingsPage() {
 
   if (isLoading) return <div className="dash-page"><div className="skeleton" style={{ height: 200 }} /></div>
 
+  function planName(key: string) {
+    return key === 'pro' ? t('plan_name_pro') : key === 'starter' ? t('plan_name_starter') : t('plan_name_free')
+  }
+
   return (
     <div className="dash-page" style={{ maxWidth: 680 }}>
-      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Settings</h1>
-      <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>Manage your account and subscription.</p>
+      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{t('title')}</h1>
+      <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>{t('subtitle')}</p>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '2rem', borderBottom: '1px solid #eceae6' }}>
-        {[['profile', User, 'Profile'], ['billing', CreditCard, 'Billing']].map(([key, Icon, label]) => (
+        {[['profile', User, t('tab_profile')], ['billing', CreditCard, t('tab_billing')]].map(([key, Icon, label]) => (
           <button key={key as string} onClick={() => setTab(key as 'profile' | 'billing')}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1rem', background: 'none', border: 'none', borderBottom: tab === key ? '2px solid var(--brand)' : '2px solid transparent', cursor: 'pointer', fontSize: '0.875rem', fontWeight: tab === key ? 600 : 400, color: tab === key ? 'var(--brand)' : 'var(--ink-muted)', marginBottom: -1 }}>
             {/* @ts-ignore */}
@@ -70,19 +76,19 @@ export default function SettingsPage() {
       {tab === 'profile' && (
         <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>Personal info</h2>
+            <h2 style={{ fontSize: '1rem', marginBottom: 0 }}>{t('personal_info')}</h2>
             <div>
-              <label className="label">Full name</label>
-              <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" />
+              <label className="label">{t('full_name_label')}</label>
+              <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder={t('name_placeholder')} />
             </div>
             <div>
-              <label className="label">Email</label>
+              <label className="label">{t('email_label')}</label>
               <input className="input" value={profile?.email || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
-              <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.3rem' }}>Email cannot be changed here. Contact support to update it.</p>
+              <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: '0.3rem' }}>{t('email_note')}</p>
             </div>
           </div>
           <button type="submit" className="btn btn-primary" disabled={saving} style={{ alignSelf: 'flex-start' }}>
-            {saving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</> : saved ? <><CheckCircle2 size={14} /> Saved!</> : 'Save changes'}
+            {saving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> {t('saving')}</> : saved ? <><CheckCircle2 size={14} /> {t('saved')}</> : t('save_changes')}
           </button>
         </form>
       )}
@@ -96,18 +102,18 @@ export default function SettingsPage() {
                 <Zap size={18} color="var(--brand)" />
               </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '1rem' }}>Current plan: <span style={{ color: 'var(--brand)' }}>{PLANS[profile?.plan || 'free'].name}</span></div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>${PLANS[profile?.plan || 'free'].price}/month</div>
+                <div style={{ fontWeight: 600, fontSize: '1rem' }}>{t('current_plan')} <span style={{ color: 'var(--brand)' }}>{planName(profile?.plan || 'free')}</span></div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>${PLANS[profile?.plan || 'free'].price}{t('per_month')}</div>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {[
-                ['Testimonials', PLANS[profile?.plan || 'free'].testimonials === -1 ? 'Unlimited' : `${PLANS[profile?.plan || 'free'].testimonials} max`],
-                ['Spaces', PLANS[profile?.plan || 'free'].spaces === -1 ? 'Unlimited' : `${PLANS[profile?.plan || 'free'].spaces} max`],
-                ['AI rewriter', PLANS[profile?.plan || 'free'].ai ? '✓ Included' : '✗ Not included'],
-                ['AI Testimonial Coach', PLANS[profile?.plan || 'free'].coach ? '✓ Included' : '✗ Not included'],
-                ['Video testimonials', PLANS[profile?.plan || 'free'].video ? '✓ Included' : '✗ Not included'],
-                ['Remove branding', PLANS[profile?.plan || 'free'].removeBranding ? '✓ Included' : '✗ Not included'],
+                [t('feature_testimonials'), PLANS[profile?.plan || 'free'].testimonials === -1 ? t('unlimited') : `${PLANS[profile?.plan || 'free'].testimonials} ${t('max_suffix')}`],
+                [t('feature_spaces'), PLANS[profile?.plan || 'free'].spaces === -1 ? t('unlimited') : `${PLANS[profile?.plan || 'free'].spaces} ${t('max_suffix')}`],
+                [t('feature_ai'), PLANS[profile?.plan || 'free'].ai ? `✓ ${t('included')}` : `✗ ${t('not_included')}`],
+                [t('feature_coach'), PLANS[profile?.plan || 'free'].coach ? `✓ ${t('included')}` : `✗ ${t('not_included')}`],
+                [t('feature_video'), PLANS[profile?.plan || 'free'].video ? `✓ ${t('included')}` : `✗ ${t('not_included')}`],
+                [t('feature_branding'), PLANS[profile?.plan || 'free'].removeBranding ? `✓ ${t('included')}` : `✗ ${t('not_included')}`],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', padding: '0.3rem 0', borderBottom: '1px solid #f5ede0' }}>
                   <span style={{ color: 'var(--ink-muted)' }}>{k}</span>
@@ -121,14 +127,14 @@ export default function SettingsPage() {
           {profile?.plan !== 'pro' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <h2 style={{ fontSize: '1rem', margin: 0 }}>Upgrade your plan</h2>
+                <h2 style={{ fontSize: '1rem', margin: 0 }}>{t('upgrade_plan_title')}</h2>
                 {/* Billing interval toggle */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', background: '#f5ede0', borderRadius: 100, padding: '0.2rem', gap: '0.15rem' }}>
                   {(['monthly', 'annual'] as const).map(iv => (
                     <button key={iv} onClick={() => setBillingInterval(iv)}
                       style={{ padding: '0.3rem 0.85rem', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, transition: 'all 0.15s', background: billingInterval === iv ? 'white' : 'transparent', color: billingInterval === iv ? 'var(--ink)' : 'var(--ink-muted)', boxShadow: billingInterval === iv ? '0 1px 3px rgba(0,0,0,0.12)' : 'none' }}>
-                      {iv === 'monthly' ? 'Monthly' : 'Annual'}
-                      {iv === 'annual' && <span style={{ marginLeft: 5, background: '#2e7d4f', color: 'white', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 100 }}>−10%</span>}
+                      {iv === 'monthly' ? t('monthly') : t('annual')}
+                      {iv === 'annual' && <span style={{ marginLeft: 5, background: '#2e7d4f', color: 'white', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 100 }}>{t('save_badge')}</span>}
                     </button>
                   ))}
                 </div>
@@ -140,33 +146,33 @@ export default function SettingsPage() {
                   const displayPrice = isAnnual ? plan.annualMonthly : plan.price
                   return (
                     <div key={planKey} className="card" style={{ border: planKey === 'pro' ? '2px solid var(--brand)' : '1px solid #eceae6', position: 'relative' }}>
-                      {planKey === 'pro' && <div style={{ position: 'absolute', top: -12, right: 20, background: 'var(--brand)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.75rem', borderRadius: 100 }}>Most popular</div>}
+                      {planKey === 'pro' && <div style={{ position: 'absolute', top: -12, right: 20, background: 'var(--brand)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.75rem', borderRadius: 100 }}>{t('most_popular')}</div>}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                         <div>
-                          <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{plan.name}</h3>
+                          <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{planName(planKey)}</h3>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 700 }}>${displayPrice}</span>
-                            <span style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>/month</span>
+                            <span style={{ color: 'var(--ink-muted)', fontSize: '0.85rem' }}>{t('per_month')}</span>
                           </div>
                           {isAnnual && (
                             <div style={{ fontSize: '0.75rem', color: '#2e7d4f', fontWeight: 600 }}>
-                              ${plan.annualPrice}/year · Save ${Math.round((plan.price * 12 - plan.annualPrice) * 100) / 100}
+                              {t('per_year_save', { price: plan.annualPrice, amount: Math.round((plan.price * 12 - plan.annualPrice) * 100) / 100 })}
                             </div>
                           )}
                         </div>
                         <button onClick={() => handleUpgrade(planKey as 'starter' | 'pro')} className={`btn ${planKey === 'pro' ? 'btn-primary' : 'btn-secondary'}`} style={{ fontSize: '0.875rem' }}>
-                          Upgrade to {plan.name}
+                          {t('upgrade_to', { plan: planName(planKey) })}
                         </button>
                       </div>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         {[
-                          plan.testimonials === -1 ? 'Unlimited testimonials' : `${plan.testimonials} testimonials`,
-                          plan.spaces === -1 ? 'Unlimited spaces' : `${plan.spaces} spaces`,
-                          plan.ai && 'AI rewriter',
-                          plan.coach && 'AI Testimonial Coach',
-                          plan.video && 'Video testimonials',
-                          plan.removeBranding && 'Remove branding',
-                          plan.customDomain && 'Custom domain',
+                          plan.testimonials === -1 ? t('feature_unlimited_testimonials') : t('feature_n_testimonials', { count: plan.testimonials }),
+                          plan.spaces === -1 ? t('feature_unlimited_spaces') : t('feature_n_spaces', { count: plan.spaces }),
+                          plan.ai && t('feature_ai'),
+                          plan.coach && t('feature_coach'),
+                          plan.video && t('feature_video'),
+                          plan.removeBranding && t('feature_branding'),
+                          plan.customDomain && t('feature_custom_domain'),
                         ].filter(Boolean).map(f => (
                           <li key={f as string} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', color: 'var(--ink)' }}>
                             <CheckCircle2 size={13} color="var(--brand)" /> {f}
@@ -182,7 +188,7 @@ export default function SettingsPage() {
 
           {profile?.plan !== 'free' && (
             <div style={{ padding: '1rem', background: 'var(--paper)', border: '1px solid #eceae6', borderRadius: 10, fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
-              To cancel or manage your subscription, contact support at <strong>support@vouchly.tech</strong>. You can also manage billing through the Stripe customer portal.
+              {t.rich('cancel_note', { b: (chunks) => <strong>{chunks}</strong>, email: 'support@vouchly.tech' })}
             </div>
           )}
         </div>

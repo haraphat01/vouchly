@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import { Plus, ExternalLink, Copy, Trash2, Edit } from 'lucide-react'
@@ -28,6 +29,7 @@ async function fetchAllSpaceScores(spaceIds: string[]) {
 }
 
 export default function SpacesPage() {
+  const t = useTranslations('dashboard.spaces_list')
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState<string | null>(null)
 
@@ -52,9 +54,9 @@ export default function SpacesPage() {
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
     }
 
-    toast(`"${name}" deleted`, {
-      description: 'Space and all its testimonials have been removed.',
-      action: { label: 'Undo', onClick: () => queryClient.setQueryData(['spaces'], previous) },
+    toast(t('deleted_toast', { name }), {
+      description: t('deleted_desc'),
+      action: { label: t('undo'), onClick: () => queryClient.setQueryData(['spaces'], previous) },
       duration: 5000,
       onDismiss: commitDelete,
       onAutoClose: commitDelete,
@@ -71,11 +73,11 @@ export default function SpacesPage() {
     <div className="dash-page" style={{ maxWidth: 1000 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Spaces</h1>
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem' }}>Each space is a branded collection page for one product or service.</p>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{t('title')}</h1>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem' }}>{t('subtitle')}</p>
         </div>
         <Link href="/dashboard/spaces/new" className="btn btn-primary">
-          <Plus size={15} /> New Space
+          <Plus size={15} /> {t('new_space')}
         </Link>
       </div>
 
@@ -86,9 +88,9 @@ export default function SpacesPage() {
       ) : spaces.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '4rem', border: '2px dashed #eceae6', background: 'var(--paper)' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>No spaces yet</h3>
-          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', maxWidth: 360, margin: '0 auto 1.5rem' }}>Create your first space to start collecting testimonials from your customers.</p>
-          <Link href="/dashboard/spaces/new" className="btn btn-primary">Create your first space</Link>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{t('empty_title')}</h3>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '0.95rem', maxWidth: 360, margin: '0 auto 1.5rem' }}>{t('empty_desc')}</p>
+          <Link href="/dashboard/spaces/new" className="btn btn-primary">{t('empty_cta')}</Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -98,7 +100,7 @@ export default function SpacesPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--ink)' }}>{space.name}</span>
-                  <span className={`badge ${space.is_active ? 'badge-green' : 'badge-gray'}`} style={{ fontSize: '0.68rem' }}>{space.is_active ? 'Active' : 'Inactive'}</span>
+                  <span className={`badge ${space.is_active ? 'badge-green' : 'badge-gray'}`} style={{ fontSize: '0.68rem' }}>{space.is_active ? t('active') : t('inactive')}</span>
                   {spaceScores[space.id] && (() => {
                     const ps = spaceScores[space.id]
                     return (
@@ -114,13 +116,13 @@ export default function SpacesPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
                   <button onClick={() => copyLink(space.slug)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                    <Copy size={13} /> {copied === space.slug ? 'Copied!' : 'Copy link'}
+                    <Copy size={13} /> {copied === space.slug ? t('copied') : t('copy_link')}
                   </button>
                   <Link href={`/collect/${space.slug}`} target="_blank" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                    <ExternalLink size={13} /> Preview
+                    <ExternalLink size={13} /> {t('preview')}
                   </Link>
                   <Link href={`/dashboard/spaces/${space.id}`} className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
-                    <Edit size={13} /> Manage
+                    <Edit size={13} /> {t('manage')}
                   </Link>
                   <button onClick={() => deleteSpace(space.id, space.name)} className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', color: '#c0392b' }}>
                     <Trash2 size={13} />

@@ -30,19 +30,32 @@ export type ProofScoreGradeIconKey = 'gem' | 'flame' | 'star' | 'trending-up' | 
 export type ScoreDimension = {
   score: number
   max: number
-  label: string
   icon: ProofScoreDimensionIconKey
 }
 
+export type ScoreTipKey =
+  | 'volume'
+  | 'first'
+  | 'recency'
+  | 'rating_none'
+  | 'rating_low'
+  | 'diversity'
+  | 'video_none'
+  | 'video_low'
+  | 'depth'
+
 export type ScoreTip = {
   icon: ProofScoreTipIconKey
-  text: string
+  key: ScoreTipKey
+  values?: Record<string, number>
   impact: number
 }
 
+export type ProofScoreGradeKey = 'elite' | 'strong' | 'building' | 'growing' | 'starting'
+
 export type ProofScoreResult = {
   total: number
-  grade: string
+  gradeKey: ProofScoreGradeKey
   gradeIcon: ProofScoreGradeIconKey
   color: string
   dimensions: ScoreDimension[]
@@ -121,12 +134,12 @@ export function calculateProofScore(testimonials: ScoredTestimonial[]): ProofSco
   const total = Math.min(100, volumeScore + recencyScore + ratingScore + diversityScore + videoScore + depthScore)
 
   // ── Grade ────────────────────────────────────────────────────────────
-  let grade: string, gradeIcon: ProofScoreGradeIconKey
-  if (total >= 81) { grade = 'Elite'; gradeIcon = 'gem' }
-  else if (total >= 61) { grade = 'Strong'; gradeIcon = 'flame' }
-  else if (total >= 41) { grade = 'Building'; gradeIcon = 'star' }
-  else if (total >= 21) { grade = 'Growing'; gradeIcon = 'trending-up' }
-  else { grade = 'Starting'; gradeIcon = 'sprout' }
+  let gradeKey: ProofScoreGradeKey, gradeIcon: ProofScoreGradeIconKey
+  if (total >= 81) { gradeKey = 'elite'; gradeIcon = 'gem' }
+  else if (total >= 61) { gradeKey = 'strong'; gradeIcon = 'flame' }
+  else if (total >= 41) { gradeKey = 'building'; gradeIcon = 'star' }
+  else if (total >= 21) { gradeKey = 'growing'; gradeIcon = 'trending-up' }
+  else { gradeKey = 'starting'; gradeIcon = 'sprout' }
 
   const color = total >= 71 ? '#2e7d4f' : total >= 41 ? '#2980b9' : '#e8963a'
 
@@ -139,65 +152,57 @@ export function calculateProofScore(testimonials: ScoredTestimonial[]): ProofSco
     const needed = next - n
     const nextScore = n < 1 ? 7 : n < 3 ? 12 : n < 6 ? 17 : n < 11 ? 21 : 25
     const gain = nextScore - volumeScore
-    tips.push({
-      icon: 'inbox',
-      text: `Collect ${needed} more testimonial${needed > 1 ? 's' : ''} to earn +${gain} pts`,
-      impact: gain,
-    })
+    tips.push({ icon: 'inbox', key: 'volume', values: { needed, gain }, impact: gain })
   }
 
   // Recency tip
   if (n === 0) {
-    tips.push({ icon: 'rocket', text: 'Collect your first testimonial to start your Proof Score', impact: 20 })
+    tips.push({ icon: 'rocket', key: 'first', impact: 20 })
   } else if (recencyScore < 16) {
     const gain = 16 - recencyScore
-    tips.push({ icon: 'calendar', text: `No new testimonials in 30+ days — share your link to stay fresh (+${gain} pts)`, impact: gain })
+    tips.push({ icon: 'calendar', key: 'recency', values: { gain }, impact: gain })
   }
 
   // Rating tip
   if (rated.length === 0) {
-    tips.push({ icon: 'star', text: 'Ask customers to add a star rating — it can add up to +10 pts', impact: 10 })
+    tips.push({ icon: 'star', key: 'rating_none', impact: 10 })
   } else if (ratingScore < 20) {
     const avg = rated.reduce((s, t) => s + (t.rating ?? 0), 0) / rated.length
-    tips.push({ icon: 'star', text: `Average rating is ${avg.toFixed(1)}★ — more 5★ reviews could add +${20 - ratingScore} pts`, impact: 20 - ratingScore })
+    tips.push({ icon: 'star', key: 'rating_low', values: { avg: Math.round(avg * 10) / 10, gain: 20 - ratingScore }, impact: 20 - ratingScore })
   }
 
   // Diversity tip
   if (diversityScore < 15) {
     const needed = uniqueCount < 1 ? 1 : uniqueCount < 3 ? 3 - uniqueCount : 6 - uniqueCount
-    tips.push({
-      icon: 'users',
-      text: `Get ${needed} more reviewer${needed > 1 ? 's' : ''} with different roles or companies (+${15 - diversityScore} pts)`,
-      impact: 15 - diversityScore,
-    })
+    tips.push({ icon: 'users', key: 'diversity', values: { needed, gain: 15 - diversityScore }, impact: 15 - diversityScore })
   }
 
   // Video tip
   if (videoScore < 5) {
-    tips.push({ icon: 'video', text: 'Add 1 video testimonial for a big credibility boost (+5 pts)', impact: 5 })
+    tips.push({ icon: 'video', key: 'video_none', impact: 5 })
   } else if (videoScore < 10) {
-    tips.push({ icon: 'video', text: `Grow video testimonials to 40%+ of total for max score (+${10 - videoScore} pts)`, impact: 10 - videoScore })
+    tips.push({ icon: 'video', key: 'video_low', values: { gain: 10 - videoScore }, impact: 10 - videoScore })
   }
 
   // Depth tip
   if (depthScore < 10 && textOnes.length > 0) {
-    tips.push({ icon: 'pen-line', text: `Prompt customers for more detail — aim for 60+ words (+${10 - depthScore} pts)`, impact: 10 - depthScore })
+    tips.push({ icon: 'pen-line', key: 'depth', values: { gain: 10 - depthScore }, impact: 10 - depthScore })
   }
 
   tips.sort((a, b) => b.impact - a.impact)
 
   return {
     total,
-    grade,
+    gradeKey,
     gradeIcon,
     color,
     dimensions: [
-      { score: volumeScore, max: 25, label: 'Volume', icon: 'volume' },
-      { score: recencyScore, max: 20, label: 'Recency', icon: 'recency' },
-      { score: ratingScore, max: 20, label: 'Ratings', icon: 'ratings' },
-      { score: diversityScore, max: 15, label: 'Diversity', icon: 'diversity' },
-      { score: videoScore, max: 10, label: 'Video', icon: 'video' },
-      { score: depthScore, max: 10, label: 'Depth', icon: 'depth' },
+      { score: volumeScore, max: 25, icon: 'volume' },
+      { score: recencyScore, max: 20, icon: 'recency' },
+      { score: ratingScore, max: 20, icon: 'ratings' },
+      { score: diversityScore, max: 15, icon: 'diversity' },
+      { score: videoScore, max: 10, icon: 'video' },
+      { score: depthScore, max: 10, icon: 'depth' },
     ],
     tips: tips.slice(0, 3),
   }
